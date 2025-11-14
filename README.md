@@ -1,0 +1,3 @@
+- 開発環境: http://localhost/
+- http://localhost/admin/login
+- phpMyAdmin: http://localhost:8080/
