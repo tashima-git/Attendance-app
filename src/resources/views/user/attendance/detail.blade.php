@@ -2,11 +2,11 @@
 
 @section('title', '勤怠詳細')
 
-@section('css')
-<link rel="stylesheet" href="{{ asset('css/attendance-list.css') }}">
-@endsection
 
 @section('content')
+
+<link rel="stylesheet" href="{{ asset('css/attendance-list.css') }}">
+
 <div class="container">
     <h1>勤怠詳細</h1>
 

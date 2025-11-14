@@ -58,6 +58,7 @@ class AttendanceController extends Controller
      */
     public function store(Request $request)
     {
+
         $user = Auth::user();
         $today = Carbon::today()->toDateString();
 
