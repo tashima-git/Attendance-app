@@ -1,0 +1,102 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #f0eff2;
+}
+
+.container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 30px;
+}
+
+h1 {
+    font-size: 24px;
+    margin-bottom: 30px;
+    padding-left: 15px;
+    border-left: 4px solid #000;
+}
+
+.tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #000;
+}
+
+.tab {
+    padding: 15px 30px;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+    background-color: transparent;
+    color: #737373;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.tab.active {
+    color: #000;
+    font-weight: bold;
+}
+
+.content table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+th,
+td {
+    padding: 15px 10px;
+    text-align: center;
+    font-size: 14px;
+    color: #737373;
+}
+
+th {
+    font-weight: 500;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+td {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+tbody tr:hover {
+    background-color: #fafafa;
+}
+
+.status {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.status-pending {
+    background-color: #fff;
+    color: #737373;
+}
+
+.status-approved {
+    background-color: #d1ffd1;
+    color: #007700;
+}
+
+.detail-link {
+    color: #000;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.detail-link:hover {
+    text-decoration: underline;
+}
