@@ -4,23 +4,20 @@
     box-sizing: border-box;
 }
 
-body {
-    background-color: #f0eff2;
-}
-
 .container {
     max-width: 900px;
-    margin: 40px auto;
-    padding: 30px;
+    margin: 60px auto;
+    font-weight: bold;
 }
 
 h1 {
-    font-size: 24px;
+    font-size: 30px;
     margin-bottom: 30px;
     padding-left: 15px;
     border-left: 4px solid #000;
 }
 
+/* 月ナビゲーション */
 .date-nav {
     display: flex;
     justify-content: space-between;
@@ -36,21 +33,35 @@ h1 {
     border: none;
     color: #666;
     cursor: pointer;
-    font-size: 14px;
-}
-
-.current-date {
-    display: flex;
-    align-items: center;
-    gap: 10px;
     font-size: 16px;
-    font-weight: 500;
 }
 
-.current-date::before {
-    content: '📅';
+/* 今月 YYYY/MM 表示 */
+.month-form {
+    display: inline-block;
+    cursor: pointer;
 }
 
+.month-display-text {
+    font-size: 20px;
+    user-select: none;
+    cursor: pointer;
+}
+
+.month-display-text::before {
+    content: "📅";
+    margin-right: 6px;
+    cursor: pointer;
+}
+
+/* 実際の input(type=month) 完全非表示 */
+.month-picker-hidden {
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+}
+
+/* テーブル */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -62,17 +73,16 @@ table {
 thead th {
     padding: 15px 10px;
     text-align: center;
-    font-weight: 500;
-    font-size: 14px;
+    font-size: 16px;
     color: #666;
     border-bottom: 2px solid #e0e0e0;
 }
 
 tbody td {
-    padding: 15px 10px;
+    padding: 5px 10px;
     text-align: center;
-    font-size: 14px;
-    border-bottom: 1px solid #f0f0f0;
+    font-size: 16px;
+    border-bottom: 2px solid #f0f0f0;
     color: #737373;
 }
 
@@ -84,8 +94,7 @@ tbody tr:hover {
     display: inline-block;
     padding: 4px 12px;
     border-radius: 3px;
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 16px;
     text-decoration: none;
     color: #000;
 }
@@ -93,10 +102,9 @@ tbody tr:hover {
 .status-calculated {
     background-color: #fff;
     color: #000;
-    font-weight: bold;
 }
 
 .date-cell {
-    font-weight: 500;
     color: #737373;
 }
+

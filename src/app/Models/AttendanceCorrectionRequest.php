@@ -12,9 +12,8 @@ class AttendanceCorrectionRequest extends Model
     protected $fillable = [
         'attendance_id',
         'user_id',
+        'work_date',
         'clock_in',
-        'break_start',
-        'break_end',
         'clock_out',
         'remarks',
         'status',
@@ -35,5 +34,10 @@ class AttendanceCorrectionRequest extends Model
     public function approver()
     {
         return $this->belongsTo(Admin::class, 'approved_by');
+    }
+
+    public function correctionBreakTimes()
+    {
+        return $this->hasMany(CorrectionBreakTime::class, 'correction_request_id');
     }
 }

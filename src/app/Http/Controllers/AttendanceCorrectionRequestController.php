@@ -6,72 +6,94 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\AttendanceCorrectionRequest;
 use App\Models\Attendance;
+use App\Models\CorrectionBreakTime;
 use App\Http\Requests\AttendanceCorrectionRequestRequest;
+use Carbon\Carbon;
 
 class AttendanceCorrectionRequestController extends Controller
 {
     /**
-     * 申請一覧を表示（承認待ち・承認済みの切り替え対応）
-     *
-     * @param Request $request
-     * @return \Illuminate\View\View
+     * 申請一覧（承認待ち・承認済み）
      */
     public function index(Request $request)
     {
-        // デフォルトは「承認待ち」
         $status = $request->get('status', 'pending');
 
-        // ログイン中ユーザーの申請のみ取得
         $requests = AttendanceCorrectionRequest::where('user_id', Auth::id())
             ->where('status', $status)
-            ->with('attendance')
+            ->with(['attendance', 'correctionBreakTimes'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        return view('user.correction_request_list', compact('requests', 'status'));
+        return view('user.attendanceCorrectionRequest.list', compact('requests', 'status'));
     }
 
     /**
-     * 申請詳細画面の表示
-     *
-     * @param int $id
-     * @return \Illuminate\View\View
+     * 詳細画面
      */
     public function show($id)
     {
         $correctionRequest = AttendanceCorrectionRequest::where('user_id', Auth::id())
-            ->with('attendance')
+            ->with(['attendance', 'correctionBreakTimes'])
             ->findOrFail($id);
 
         return view('user.correction_request_detail', compact('correctionRequest'));
     }
 
     /**
-     * 勤怠修正申請の登録処理
-     *
-     * @param AttendanceCorrectionRequestRequest $request
-     * @return \Illuminate\Http\RedirectResponse
+     * 修正申請の新規登録
      */
     public function store(AttendanceCorrectionRequestRequest $request)
     {
+        // 勤怠データの存在を確認（無ければ null 許容）
         $attendance = Attendance::where('id', $request->attendance_id)
             ->where('user_id', Auth::id())
-            ->firstOrFail();
+            ->first();
 
-        // 新しい修正申請を登録
-        AttendanceCorrectionRequest::create([
-            'user_id' => Auth::id(),
-            'attendance_id' => $attendance->id,
-            'clock_in' => $request->clock_in,
-            'clock_out' => $request->clock_out,
-            'break_start' => $request->break_start,
-            'break_end' => $request->break_end,
-            'reason' => $request->reason,
-            'status' => 'pending', // 登録時は承認待ち固定
+        // 修正申請本体を作成（attendance_id が無くても work_date で紐付け可能）
+        $correctionRequest = AttendanceCorrectionRequest::create([
+            'user_id'       => Auth::id(),
+            'attendance_id' => $attendance->id ?? null,
+            'work_date'     => $request->work_date,
+            'clock_in'      => $request->clock_in,
+            'clock_out'     => $request->clock_out,
+            'remarks'       => $request->remarks,
+            'status'        => 'pending',
         ]);
 
+        // 休憩入力がある場合のみ保存
+        if ($request->filled('breaks')) {
+            foreach ($request->breaks as $break) {
+                if (!empty($break['break_start']) && !empty($break['break_end'])) {
+                    CorrectionBreakTime::create([
+                        'correction_request_id' => $correctionRequest->id,
+                        'break_start'           => $break['break_start'],
+                        'break_end'             => $break['break_end'],
+                        'total_break_time'      => $this->calcBreakMinutes(
+                            $break['break_start'],
+                            $break['break_end']
+                        ),
+                    ]);
+                }
+            }
+        }
+
         return redirect()
-            ->route('attendance_corrections.index', ['status' => 'pending'])
+            ->route('correction_request.index', ['status' => 'pending'])
             ->with('success', '勤怠修正申請を提出しました。');
+    }
+
+    /**
+     * 休憩時間の合計（分）を計算
+     */
+    private function calcBreakMinutes(string $start, string $end): int
+    {
+        try {
+            $startTime = Carbon::createFromFormat('H:i', $start);
+            $endTime   = Carbon::createFromFormat('H:i', $end);
+            return $startTime->diffInMinutes($endTime);
+        } catch (\Exception $e) {
+            return 0; // 不正な時間フォーマットの場合でも落ちないように
+        }
     }
 }

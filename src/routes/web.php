@@ -11,25 +11,34 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 
 // ===================================================
-// メール認証ルート（Fortify環境対応）
+// トップページ
 // ===================================================
-
 Route::get('/', function () {
-    if(auth()->check()) {
+    if (auth()->check()) {
         return redirect()->route('attendance.index'); // ログイン済みなら勤怠画面
     }
     return redirect()->route('login'); // 未ログインならログインページ
 });
 
+// ===================================================
+// メール認証ルート（Fortify対応）
+// ===================================================
+
+// /home にアクセスされた場合はメール認証画面にリダイレクト
+Route::get('/home', function () {
+    return redirect()->route('verification.notice');
+});
+
+
 // 認証待ち画面
 Route::get('/email/verify', function () {
-    return view('user.auth.verify-email'); // verify-email.blade.php に合わせる
+    return view('user.auth.verify-email'); // verify-email.blade.php
 })->middleware('auth')->name('verification.notice');
 
-// メール内リンクをクリック後の処理
+// メール内リンククリック後の処理
 Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-    $request->fulfill(); // 認証完了処理
-    return redirect('/attendance')->with('message', 'メール認証が完了しました。');
+    $request->fulfill(); // 認証完了
+    return redirect()->route('attendance.index')->with('message', 'メール認証が完了しました。');
 })->middleware(['auth', 'signed'])->name('verification.verify');
 
 // 認証メール再送
@@ -42,6 +51,7 @@ Route::post('/email/verification-notification', function (Request $request) {
 // 一般ユーザー向けルート（ログイン＋メール認証必須）
 // ===================================================
 Route::middleware(['auth', 'verified'])->group(function () {
+
     // 出勤登録画面
     Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
     Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
@@ -50,7 +60,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/attendance/list', [AttendanceController::class, 'list'])->name('attendance.list');
 
     // 勤怠詳細
-    Route::get('/attendance/detail/{id}', [AttendanceController::class, 'show'])->name('attendance.show');
+    Route::get('/attendance/detail/{date}', [AttendanceController::class, 'show'])->name('attendance.show');
 
     // 勤怠修正申請
     Route::post('/stamp_correction_request/store', [AttendanceCorrectionRequestController::class, 'store'])
@@ -69,7 +79,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // 管理者向けルート
 // ===================================================
 
-// 管理者ログイン関連
+// 管理者ログイン
 Route::get('/admin/login', [AdminLoginController::class, 'showLoginForm'])->name('admin.login');
 Route::post('/admin/login', [AdminLoginController::class, 'login'])->name('admin.login.submit');
 Route::post('/admin/logout', [AdminLoginController::class, 'logout'])->name('admin.logout');

@@ -21,10 +21,10 @@ class AttendanceController extends Controller
         }
 
         $attendances = Attendance::with('user')
-            ->orderBy('date', 'desc')
+            ->orderBy('work_date', 'desc')
             ->paginate(20);
 
-        return view('admin.attendance_list', compact('attendances'));
+        return view('admin.attendance.list', compact('attendances'));
     }
 
     /**
@@ -39,7 +39,7 @@ class AttendanceController extends Controller
         $attendance = Attendance::with(['user', 'breakTimes'])
             ->findOrFail($id);
 
-        return view('admin.attendance_detail', compact('attendance'));
+        return view('admin.attendance.detail', compact('attendance'));
     }
 
     /**
@@ -53,9 +53,9 @@ class AttendanceController extends Controller
 
         $user = User::findOrFail($id);
         $attendances = Attendance::where('user_id', $id)
-            ->orderBy('date', 'desc')
+            ->orderBy('work_date', 'desc')
             ->paginate(20);
 
-        return view('admin.attendance_staff_list', compact('user', 'attendances'));
+        return view('admin.attendance.staff_list', compact('user', 'attendances'));
     }
 }

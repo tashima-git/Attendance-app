@@ -1,11 +1,12 @@
 .container {
-    max-width: 700px;
-    margin: 40px auto;
+    max-width: 900px;
+    margin: 10px auto;
     padding: 30px;
+    font-size: 16px;
 }
 
 h1 {
-    font-size: 24px;
+    font-size: 30px;
     margin-bottom: 30px;
     padding-left: 15px;
     border-left: 4px solid #000;
@@ -30,23 +31,32 @@ h1 {
 }
 
 .detail-label {
-    width: 150px;
+    width: 200px;
     color: #737373;
-    font-size: 14px;
     flex-shrink: 0;
+    font-weight: bold;
 }
 
 .detail-value {
     flex: 1;
     color: #000;
-    font-size: 14px;
     font-weight: bold;
+    margin-right: 100px;
+}
+
+.value-day,
+.value-name {
+    margin-left: 20px;
+}
+
+.detail-value .year {
+    margin-right: 120px;
 }
 
 .time-row {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 40px;
 }
 
 .time-input {
@@ -84,9 +94,9 @@ h1 {
     background-color: #000;
     color: #fff;
     border: none;
-    padding: 12px 40px;
-    border-radius: 4px;
-    font-size: 14px;
+    padding: 7px 40px;
+    border-radius: 6px;
+    font-size: 22px;
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.3s;
@@ -94,4 +104,15 @@ h1 {
 
 .submit-button:hover {
     background-color: #333;
+}
+
+.no-icon::-webkit-inner-spin-button,
+.no-icon::-webkit-calendar-picker-indicator {
+    display: none;
+    -webkit-appearance: none;
+}
+
+.pending-message {
+    color: #f77879;
+    font-weight: bold;
 }

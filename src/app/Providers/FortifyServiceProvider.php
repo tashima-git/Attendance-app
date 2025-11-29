@@ -6,11 +6,13 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Models\User;
 use App\Models\Admin;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Fortify\Fortify;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 use Laravel\Fortify\Contracts\LoginViewResponse;
 use Illuminate\Http\Request;
+use Illuminate\Auth\Events\Registered;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -22,9 +24,7 @@ class FortifyServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // ユーザー登録画面
-        Fortify::registerView(function () {
-            return view('user.auth.register');
-        });
+        Fortify::registerView(fn() => view('user.auth.register'));
 
         // ログイン画面切り替え
         Fortify::loginView(function (Request $request) {
@@ -65,9 +65,14 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         // メール認証ビュー
-        Fortify::verifyEmailView(function () {
-            return view('user.auth.verify-email');
-        });
+        Fortify::verifyEmailView(fn() => view('user.auth.verify-email'));
 
+        Fortify::redirects('/email/verify');
+
+        \Event::listen(Registered::class, function (Registered $event) {
+            if ($event->user instanceof User) {
+                Auth::logout(); // 登録直後ログアウト
+            }
+        });
     }
 }

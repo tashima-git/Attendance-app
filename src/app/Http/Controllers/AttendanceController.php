@@ -12,13 +12,7 @@ use Illuminate\Support\Facades\DB;
 class AttendanceController extends Controller
 {
     /**
-     * 今日の打刻画面表示
-     *
-     * 状態:
-     * - before_work: 出勤前
-     * - working: 勤務中
-     * - on_break: 休憩中
-     * - after_work: 退勤済
+     * 今日の打刻画面
      */
     public function index()
     {
@@ -47,18 +41,16 @@ class AttendanceController extends Controller
         }
 
         $attendances = $attendance ? collect([$attendance]) : collect([]);
-        // Bladeで月ナビゲーションに使うために$monthを追加
         $month = Carbon::now()->format('Y-m');
 
         return view('user.attendance.index', compact('attendance', 'breakTime', 'status', 'month', 'attendances'));
     }
 
     /**
-     * 打刻登録処理（出勤／退勤／休憩開始／休憩終了）
+     * 出勤・退勤・休憩開始・休憩終了
      */
     public function store(Request $request)
     {
-
         $user = Auth::user();
         $today = Carbon::today()->toDateString();
 
@@ -69,7 +61,9 @@ class AttendanceController extends Controller
                 ->where('work_date', $today)
                 ->first();
 
-            // 出勤打刻
+            /**
+             * 出勤
+             */
             if ($request->has('clock_in')) {
                 if ($attendance) {
                     return back()->with('error', '本日はすでに出勤済みです。');
@@ -85,7 +79,9 @@ class AttendanceController extends Controller
                 return back()->with('success', '出勤打刻しました。');
             }
 
-            // 休憩開始
+            /**
+             * 休憩開始
+             */
             if ($request->has('break_start')) {
                 if (!$attendance) return back()->with('error', '出勤打刻が必要です。');
                 if ($attendance->clock_out) return back()->with('error', '退勤後は休憩できません。');
@@ -107,46 +103,51 @@ class AttendanceController extends Controller
                 return back()->with('success', '休憩を開始しました。');
             }
 
-            // 休憩終了
+            /**
+             * 休憩終了
+             */
             if ($request->has('break_end')) {
                 if (!$attendance) return back()->with('error', '出勤打刻が必要です。');
-                if ($attendance->clock_out) return back()->with('error', '退勤後は休憩を終了できません。');
+                if ($attendance->clock_out) return back()->with('error', '退勤後は休憩終了できません。');
 
-                $breakTime = BreakTime::where('attendance_id', $attendance->id)
+                $bt = BreakTime::where('attendance_id', $attendance->id)
                     ->whereNull('break_end')
                     ->latest('id')
                     ->first();
 
-                if (!$breakTime) return back()->with('error', '休憩開始が未登録です。');
+                if (!$bt) return back()->with('error', '休憩開始が未登録です。');
 
                 $breakEnd = Carbon::now();
-                $breakStart = Carbon::createFromFormat('H:i:s', $breakTime->break_start);
-                $breakMinutes = $breakStart->diffInMinutes($breakEnd);
+                $breakStart = Carbon::parse($bt->break_start); // 安全な parse に変更
+                $minutes = $breakStart->diffInMinutes($breakEnd);
 
-                $breakTime->update([
+                $bt->update([
                     'break_end' => $breakEnd->format('H:i:s'),
-                    'total_break_time' => $breakMinutes,
+                    'total_break_time' => $minutes,
                 ]);
 
                 DB::commit();
                 return back()->with('success', '休憩を終了しました。');
             }
 
-            // 退勤打刻
+            /**
+             * 退勤
+             */
             if ($request->has('clock_out')) {
                 if (!$attendance) return back()->with('error', '出勤打刻が必要です。');
                 if ($attendance->clock_out) return back()->with('error', '本日はすでに退勤済みです。');
 
                 $clockOut = Carbon::now();
-                $clockIn = Carbon::createFromFormat('H:i:s', $attendance->clock_in);
-                $totalWorkMinutes = $clockIn->diffInMinutes($clockOut);
+                $clockIn = Carbon::parse($attendance->clock_in);
 
-                $totalBreak = BreakTime::where('attendance_id', $attendance->id)
+                $totalWorkMinutes = $clockIn->diffInMinutes($clockOut);
+                $totalBreakMinutes = BreakTime::where('attendance_id', $attendance->id)
                     ->sum('total_break_time');
 
                 $attendance->update([
+                    // 🔥 秒ありで統一（重要修正）
                     'clock_out' => $clockOut->format('H:i:s'),
-                    'total_work_time' => max($totalWorkMinutes - $totalBreak, 0),
+                    'total_work_time' => max($totalWorkMinutes - $totalBreakMinutes, 0),
                 ]);
 
                 DB::commit();
@@ -154,41 +155,91 @@ class AttendanceController extends Controller
             }
 
             DB::rollBack();
-            return back()->with('error', '打刻処理が認識されませんでした。');
+            return back()->with('error', '処理を認識できませんでした。');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', '打刻処理中にエラーが発生しました。');
+            return back()->with('error', 'エラーが発生しました。');
         }
     }
 
     /**
-     * 月単位勤怠一覧
+     * 月次勤怠一覧（HH:MM 表示・休憩 HH:MM 表示）
      */
     public function list(Request $request)
     {
         $user = Auth::user();
         $month = $request->input('month', Carbon::now()->format('Y-m'));
 
-        $attendances = Attendance::where('user_id', $user->id)
-            ->where('work_date', 'like', $month . '%')
-            ->orderBy('work_date', 'desc')
+        $start = Carbon::parse($month)->startOfMonth();
+        $end   = Carbon::parse($month)->endOfMonth();
+
+        $attendances = Attendance::with('breakTimes')
+            ->where('user_id', $user->id)
+            ->whereBetween('work_date', [$start, $end])
+            ->orderBy('work_date')
             ->get();
 
-        return view('user.attendance.list', compact('attendances', 'month'));
+        // 日付キー化 + 勤務時間・休憩時間計算
+        $attendanceMap = $attendances->mapWithKeys(function ($attendance) {
+            $dateKey = Carbon::parse($attendance->work_date)->format('Y-m-d');
+
+            // 勤務時間（分）
+            $totalMinutes = 0;
+            if ($attendance->clock_in && $attendance->clock_out) {
+                $in  = Carbon::parse($attendance->clock_in);
+                $out = Carbon::parse($attendance->clock_out);
+                $totalMinutes = $in->diffInMinutes($out)
+                                - $attendance->breakTimes->sum('total_break_time');
+                $totalMinutes = max($totalMinutes, 0);
+            }
+
+            // HH:MM に変換
+            $attendance->setAttribute(
+                'total_work_time_hm',
+                sprintf('%02d:%02d', floor($totalMinutes / 60), $totalMinutes % 60)
+            );
+
+            // 休憩時間
+            $breakMinutes = $attendance->breakTimes->sum('total_break_time');
+            $attendance->setAttribute(
+                'break_hm',
+                sprintf('%02d:%02d', floor($breakMinutes / 60), $breakMinutes % 60)
+            );
+
+            return [$dateKey => $attendance];
+        });
+
+        return view('user.attendance.list', compact('attendanceMap', 'month', 'start', 'end'));
     }
 
     /**
-     * 勤怠詳細
+     * 勤怠詳細（勤怠が無い日でも安全に表示）
      */
-    public function show($id)
+    public function show($date)
     {
-        $attendance = Attendance::with('breakTimes')->findOrFail($id);
+        $user = Auth::user();
 
-        if ($attendance->user_id !== Auth::id()) {
-            abort(403, 'このページにはアクセスできません。');
+        $attendance = Attendance::with(['breakTimes', 'user', 'correctionRequests'])
+            ->where('user_id', $user->id)
+            ->where('work_date', $date)
+            ->first();
+
+        // 勤怠なし → 空の Attendance を作る
+        if (!$attendance) {
+            $attendance = new Attendance();
+            $attendance->id = null;
+            $attendance->user_id = $user->id;
+            $attendance->work_date = $date;
+            $attendance->clock_in = null;
+            $attendance->clock_out = null;
+
+            // 空リレーション
+            $attendance->setRelation('breakTimes', collect());
+            $attendance->setRelation('correctionRequests', collect());
+            $attendance->setRelation('user', $user);
         }
 
-        return view('user.attendance.detail', compact('attendance'));
+        return view('user.attendance.detail', compact('attendance', 'date'));
     }
 }

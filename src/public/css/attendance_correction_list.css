@@ -1,0 +1,132 @@
+.correction-container {
+    max-width: 900px;
+    margin: 60px auto;
+}
+
+/* タイトル */
+.correction-container h1 {
+    font-size: 30px;
+    margin-bottom: 40px;
+    border-left: 4px solid #000;
+    padding-left: 15px;
+    color: #000;
+}
+
+/* タブ */
+.tabs {
+    display: flex;
+    border-bottom: 1.5px solid #000;
+    margin-bottom: 30px;
+}
+
+.tab {
+    padding: 15px 40px;
+    color: #666;
+    text-decoration: none;
+    font-size: 16px;
+    transition: 0.1s;
+}
+
+.tab.active {
+    font-weight: bold;
+    color: #000;
+}
+
+/* テーブル本体 */
+.correction-table {
+    width: 100%;
+    background: #fff;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    table-layout: fixed;
+}
+
+.correction-table th {
+    padding: 18px;
+    background: #fff;
+    font-size: 16px;
+    color: #666;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: left;
+    font-weight: bold;
+}
+
+.correction-table td {
+    padding: 18px;
+    border-bottom: 1px solid #eee;
+    font-size: 16px;
+    color: #737373;
+    font-weight: bold;
+}
+
+.correction-table tbody tr:hover {
+    background: #fafafa;
+}
+
+/* 列の省略表示 (...) */
+.correction-table th,
+.correction-table td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 列幅の固定 */
+.correction-table th:nth-child(1),
+.correction-table td:nth-child(1) {
+    width: 110px;
+}
+
+.correction-table th:nth-child(2),
+.correction-table td:nth-child(2) {
+    width: 130px;
+}
+
+.correction-table th:nth-child(3),
+.correction-table td:nth-child(3) {
+    width: 150px;
+}
+
+.correction-table th:nth-child(4),
+.correction-table td:nth-child(4) {
+    width: 280px;
+}
+
+.correction-table th:nth-child(5),
+.correction-table td:nth-child(5) {
+    width: 150px;
+}
+
+.correction-table th:nth-child(6),
+.correction-table td:nth-child(6) {
+    width: 80px;
+}
+
+/* 詳細リンク */
+.correction-table a {
+    color: #000;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.correction-table a:hover {
+    text-decoration: underline;
+}
+
+/* 空欄表示 */
+.empty {
+    text-align: center;
+    padding: 30px;
+    color: #888;
+    font-size: 16px;
+}
+
+/* ページネーション */
+.pagination-wrapper {
+    margin-top: 25px;
+    text-align: center;
+}
