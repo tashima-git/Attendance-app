@@ -15,23 +15,40 @@ class CreateNewUser implements CreatesNewUsers
 
     /**
      * Validate and create a newly registered user.
-     *
-     * @param  array<string, string>  $input
      */
     public function create(array $input): User
     {
-        // 入力バリデーション
-        Validator::make($input, [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => [
-                'required',
-                'string',
-                'email',
-                'max:255',
-                Rule::unique(User::class),
+        Validator::make(
+            $input,
+            [
+                'name' => ['required', 'string', 'max:255'],
+                'email' => [
+                    'required',
+                    'string',
+                    'email',
+                    'max:255',
+                    Rule::unique(User::class),
+                ],
+                'password' => $this->passwordRules(), // min:8, confirmed など
             ],
-            'password' => $this->passwordRules(),
-        ])->validate();
+            [
+                // --- ❶ カスタムメッセージ（要件通り） ---
+                'name.required' => 'お名前を入力してください',
+                'email.required' => 'メールアドレスを入力してください',
+                'password.required' => 'パスワードを入力してください',
+
+                // パスワードルール
+                'password.min' => 'パスワードは8文字以上で入力してください',
+                'password.confirmed' => 'パスワードと一致しません',
+            ],
+            [
+                // --- ❷ 属性名の日本語化（フォールバック用） ---
+                'name' => 'お名前',
+                'email' => 'メールアドレス',
+                'password' => 'パスワード',
+                'password_confirmation' => 'パスワード確認',
+            ]
+        )->validate();
 
         // ユーザー作成
         $user = User::create([
@@ -40,7 +57,6 @@ class CreateNewUser implements CreatesNewUsers
             'password' => Hash::make($input['password']),
         ]);
 
-        // 登録後にメール認証イベントを発火
         event(new Registered($user));
 
         return $user;

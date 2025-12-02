@@ -11,7 +11,7 @@
 
         <div class="form-group">
             <label for="email">メールアドレス</label>
-            <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus>
+            <input id="email" type="email" name="email" value="{{ old('email') }}" autofocus novalidate>
             @error('email')
                 <p class="error-message">{{ $message }}</p>
             @enderror
@@ -19,7 +19,7 @@
 
         <div class="form-group">
             <label for="password">パスワード</label>
-            <input id="password" type="password" name="password" required>
+            <input id="password" type="password" name="password" novalidate>
             @error('password')
                 <p class="error-message">{{ $message }}</p>
             @enderror

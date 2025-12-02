@@ -7,28 +7,40 @@ use App\Models\User;
 use App\Models\Attendance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
     /**
-     * 全社員の勤怠一覧を表示（管理者）
+     * 管理者：特定日の勤怠一覧（日ごと）
      */
-    public function index()
+    public function index(Request $request)
     {
         // 管理者ログインチェック
         if (!Auth::guard('admin')->check()) {
             return redirect()->route('admin.login');
         }
 
-        $attendances = Attendance::with('user')
-            ->orderBy('work_date', 'desc')
-            ->paginate(20);
+        // 指定日（デフォルト今日）
+        $date = $request->input('date', Carbon::today()->format('Y-m-d'));
 
-        return view('admin.attendance.list', compact('attendances'));
+        // 指定日の勤怠一覧取得（休憩も一緒に取得）
+        $attendances = Attendance::with('user', 'breakTimes')
+            ->whereDate('work_date', $date)
+            ->orderBy('user_id')
+            ->get()
+            ->map(function ($attendance) {
+                return $this->calculateTimes($attendance);
+            });
+
+        return view('admin.attendance.list', [
+            'attendances' => $attendances,
+            'date' => $date,
+        ]);
     }
 
     /**
-     * 特定社員の1日勤怠詳細を表示（管理者）
+     * 管理者：1日の勤怠詳細
      */
     public function show($id)
     {
@@ -39,11 +51,14 @@ class AttendanceController extends Controller
         $attendance = Attendance::with(['user', 'breakTimes'])
             ->findOrFail($id);
 
+        // 時間計算
+        $attendance = $this->calculateTimes($attendance);
+
         return view('admin.attendance.detail', compact('attendance'));
     }
 
     /**
-     * 特定スタッフの勤怠履歴を表示
+     * 管理者：特定スタッフの勤怠履歴
      */
     public function staffAttendances($id)
     {
@@ -52,10 +67,54 @@ class AttendanceController extends Controller
         }
 
         $user = User::findOrFail($id);
-        $attendances = Attendance::where('user_id', $id)
+
+        $attendances = Attendance::with('breakTimes')
+            ->where('user_id', $id)
             ->orderBy('work_date', 'desc')
             ->paginate(20);
 
+        // 個別計算
+        $attendances->getCollection()->transform(function ($attendance) {
+            return $this->calculateTimes($attendance);
+        });
+
         return view('admin.attendance.staff_list', compact('user', 'attendances'));
+    }
+
+    /**
+     * 勤務時間 & 休憩時間の計算
+     */
+    private function calculateTimes($attendance)
+    {
+        // 出勤・退勤
+        if ($attendance->clock_in && $attendance->clock_out) {
+            $start = Carbon::parse($attendance->clock_in);
+            $end   = Carbon::parse($attendance->clock_out);
+            $attendance->work_total = $start->diffInMinutes($end);
+        } else {
+            $attendance->work_total = null;
+        }
+
+        // 休憩合計時間
+        $breakMinutes = 0;
+
+        foreach ($attendance->breakTimes as $break) {
+            if ($break->break_start && $break->break_end) {
+                $breakStart = Carbon::parse($break->break_start);
+                $breakEnd   = Carbon::parse($break->break_end);
+                $breakMinutes += $breakStart->diffInMinutes($breakEnd);
+            }
+        }
+
+        $attendance->break_total = $breakMinutes;
+
+        // 実働時間（勤務時間 − 休憩時間）
+        if (!is_null($attendance->work_total)) {
+            $attendance->real_work_total = max($attendance->work_total - $attendance->break_total, 0);
+        } else {
+            $attendance->real_work_total = null;
+        }
+
+        return $attendance;
     }
 }

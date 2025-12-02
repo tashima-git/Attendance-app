@@ -11,7 +11,7 @@
 
         <div class="form-group">
             <label for="name">名前</label>
-            <input id="name" type="text" name="name" value="{{ old('name') }}" required autofocus>
+            <input id="name" type="text" name="name" value="{{ old('name') }}" autofocus novalidate>
             @error('name')
                 <p class="error-message">{{ $message }}</p>
             @enderror
@@ -19,7 +19,7 @@
 
         <div class="form-group">
             <label for="email">メールアドレス</label>
-            <input id="email" type="email" name="email" value="{{ old('email') }}" required>
+            <input id="email" type="email" name="email" value="{{ old('email') }}" novalidate>
             @error('email')
                 <p class="error-message">{{ $message }}</p>
             @enderror
@@ -27,7 +27,7 @@
 
         <div class="form-group">
             <label for="password">パスワード</label>
-            <input id="password" type="password" name="password" required>
+            <input id="password" type="password" name="password" novalidate>
             @error('password')
                 <p class="error-message">{{ $message }}</p>
             @enderror
@@ -35,7 +35,7 @@
 
         <div class="form-group">
             <label for="password_confirmation">パスワード確認</label>
-            <input id="password_confirmation" type="password" name="password_confirmation" required>
+            <input id="password_confirmation" type="password" name="password_confirmation" novalidate>
         </div>
 
         <button type="submit" class="btn-submit">登録する</button>

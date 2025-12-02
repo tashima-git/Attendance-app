@@ -24,8 +24,7 @@
     // 作業用フラグ
     $isPending = $pendingRequest !== null;
 
-    // ① 出退勤・休憩・備考の表示元を決定
-    // 申請 ＞ 勤怠 ＞ 空
+    // 表示ソース（申請 > 勤怠 > 空）
     $source = $latestRequest ?? $attendance;
 @endphp
 
@@ -34,23 +33,18 @@
 
     {{-- 申請中でない場合はフォームを表示 --}}
     @if (!$isPending)
-        <form action="{{ route('correction_request.store') }}" method="POST">
+        <form action="{{ route('correction_request.store') }}" method="POST" novalidate>
             @csrf
-
-            {{-- 勤怠ID（ない場合は空） --}}
             <input type="hidden" name="attendance_id" value="{{ $attendance->id ?? '' }}">
-
-            {{-- 必ず work_date を送る --}}
             <input type="hidden" name="work_date" value="{{ $attendance->work_date }}">
     @endif
-
 
     <div class="detail-card">
 
         {{-- 名前 --}}
         <div class="detail-row">
             <div class="detail-label">名前</div>
-            <div class="detail-value value-name">{{ $attendance->user->name }}</div>
+            <div class="detail-value">{{ $attendance->user->name }}</div>
         </div>
 
         {{-- 日付 --}}
@@ -67,41 +61,35 @@
             <div class="detail-label">出勤・退勤</div>
             <div class="detail-value">
                 <div class="time-row">
-
-                    {{-- 出勤 --}}
-                    <input type="text" class="time-input no-icon"
-                        name="clock_in"
-                        value="{{ $source->clock_in ? \Carbon\Carbon::createFromFormat('H:i:s', $source->clock_in)->format('H:i') : '' }}"
-                        pattern="[0-2][0-9]:[0-5][0-9]"
-                        maxlength="5"
-                        {{ $isPending ? 'disabled' : '' }}>
+                    <div class="input-wrapper">
+                        <input type="text" name="clock_in" class="time-input no-icon"
+                               value="{{ old('clock_in', $source->clock_in ? \Carbon\Carbon::parse($source->clock_in)->format('H:i') : '') }}"
+                               maxlength="5" {{ $isPending ? 'disabled' : '' }}>
+                        @error('clock_in')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
+                    </div>
 
                     <span class="time-separator">～</span>
 
-                    {{-- 退勤 --}}
-                    <input type="text" class="time-input no-icon"
-                        name="clock_out"
-                        value="{{ $source->clock_out ? \Carbon\Carbon::createFromFormat('H:i:s', $source->clock_out)->format('H:i') : '' }}"
-                        pattern="[0-2][0-9]:[0-5][0-9]"
-                        maxlength="5"
-                        {{ $isPending ? 'disabled' : '' }}>
-
+                    <div class="input-wrapper">
+                        <input type="text" name="clock_out" class="time-input no-icon"
+                               value="{{ old('clock_out', $source->clock_out ? \Carbon\Carbon::parse($source->clock_out)->format('H:i') : '') }}"
+                               maxlength="5" {{ $isPending ? 'disabled' : '' }}>
+                        @error('clock_out')
+                            <div class="error-message">{{ $message }}</div>
+                        @enderror
+                    </div>
                 </div>
             </div>
         </div>
 
         {{-- 休憩時間 --}}
         @php
-            // 勤怠の休憩
             $attendanceBreaks = $attendance->breakTimes ?? collect();
-
-            // 最新申請の休憩（未実装なら空配列扱い）
             $requestBreaks = ($latestRequest && method_exists($latestRequest, 'correctionBreakTimes'))
-            ? $latestRequest->correctionBreakTimes
-            : collect();
-
-
-            // 表示ソース：申請の休憩 > 勤怠の休憩 > 空
+                ? $latestRequest->correctionBreakTimes
+                : collect();
             $breakSource = $requestBreaks->isNotEmpty() ? $requestBreaks : $attendanceBreaks;
             $breakCount = $breakSource->count() + 1;
         @endphp
@@ -112,23 +100,27 @@
                 <div class="detail-label">{{ $i == 0 ? '休憩' : '休憩'.($i+1) }}</div>
                 <div class="detail-value">
                     <div class="time-row">
-
-                        <input type="text" class="time-input no-icon"
-                            name="breaks[{{ $i }}][break_start]"
-                            value="{{ $break && $break->break_start ? \Carbon\Carbon::createFromFormat('H:i:s', $break->break_start)->format('H:i') : '' }}"
-                            pattern="[0-2][0-9]:[0-5][0-9]"
-                            maxlength="5"
-                            {{ $isPending ? 'disabled' : '' }}>
+                        <div class="input-wrapper">
+                            <input type="text" name="breaks[{{ $i }}][break_start]"
+                                   class="time-input no-icon"
+                                   value="{{ old("breaks.$i.break_start", $break && $break->break_start ? \Carbon\Carbon::parse($break->break_start)->format('H:i') : '') }}"
+                                   maxlength="5" {{ $isPending ? 'disabled' : '' }}>
+                            @error("breaks.$i.break_start")
+                                <div class="error-message">{{ $message }}</div>
+                            @enderror
+                        </div>
 
                         <span class="time-separator">～</span>
 
-                        <input type="text" class="time-input no-icon"
-                            name="breaks[{{ $i }}][break_end]"
-                            value="{{ $break && $break->break_end ? \Carbon\Carbon::createFromFormat('H:i:s', $break->break_end)->format('H:i') : '' }}"
-                            pattern="[0-2][0-9]:[0-5][0-9]"
-                            maxlength="5"
-                            {{ $isPending ? 'disabled' : '' }}>
-
+                        <div class="input-wrapper">
+                            <input type="text" name="breaks[{{ $i }}][break_end]"
+                                   class="time-input no-icon"
+                                   value="{{ old("breaks.$i.break_end", $break && $break->break_end ? \Carbon\Carbon::parse($break->break_end)->format('H:i') : '') }}"
+                                   maxlength="5" {{ $isPending ? 'disabled' : '' }}>
+                            @error("breaks.$i.break_end")
+                                <div class="error-message">{{ $message }}</div>
+                            @enderror
+                        </div>
                     </div>
                 </div>
             </div>
@@ -138,20 +130,21 @@
         <div class="detail-row">
             <div class="detail-label">備考</div>
             <div class="detail-value">
-                <textarea class="note-input"
-                    name="remarks"
-                    {{ $isPending ? 'disabled' : '' }}>{{ $source->remarks ?? '' }}</textarea>
+                <div class="input-wrapper">
+                    <textarea name="remarks" class="note-input" {{ $isPending ? 'disabled' : '' }}>{{ old('remarks', $source->remarks ?? '') }}</textarea>
+                    @error('remarks')
+                        <div class="error-message">{{ $message }}</div>
+                    @enderror
+                </div>
             </div>
         </div>
+
     </div>
 
-
-    {{-- ボタン or 承認待ちメッセージ --}}
+    {{-- ボタン or 承認待ち --}}
     <div class="button-container">
         @if ($isPending)
-            <div class="pending-message">
-                ＊承認待ちのため修正はできません。
-            </div>
+            <div class="pending-message">＊承認待ちのため修正はできません。</div>
         @else
             <button type="submit" class="submit-button">修正</button>
         @endif
@@ -160,7 +153,6 @@
     @if (!$isPending)
         </form>
     @endif
-
 </div>
 
 @endsection
