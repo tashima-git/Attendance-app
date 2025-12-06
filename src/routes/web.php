@@ -10,101 +10,125 @@ use App\Http\Controllers\Admin\AttendanceCorrectionRequestController as AdminAtt
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 
-// ===================================================
-// トップページ
-// ===================================================
+/*
+|--------------------------------------------------------------------------
+| トップページ
+|--------------------------------------------------------------------------
+*/
 Route::get('/', function () {
-    if (auth()->check()) {
-        return redirect()->route('attendance.index'); // ログイン済みなら勤怠画面
-    }
-    return redirect()->route('login'); // 未ログインならログインページ
+    return auth()->check()
+        ? redirect()->route('attendance.index')
+        : redirect()->route('login');
 });
 
-// ===================================================
-// メール認証ルート（Fortify対応）
-// ===================================================
+/*
+|--------------------------------------------------------------------------
+| メール認証
+|--------------------------------------------------------------------------
+*/
+Route::get('/home', fn() => redirect()->route('verification.notice'));
 
-// /home にアクセスされた場合はメール認証画面にリダイレクト
-Route::get('/home', function () {
-    return redirect()->route('verification.notice');
-});
+Route::get('/email/verify', fn() => view('user.auth.verify-email'))
+    ->middleware('auth')
+    ->name('verification.notice');
 
-
-// 認証待ち画面
-Route::get('/email/verify', function () {
-    return view('user.auth.verify-email'); // verify-email.blade.php
-})->middleware('auth')->name('verification.notice');
-
-// メール内リンククリック後の処理
 Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-    $request->fulfill(); // 認証完了
+    $request->fulfill();
     return redirect()->route('attendance.index')->with('message', 'メール認証が完了しました。');
-})->middleware(['auth', 'signed'])->name('verification.verify');
+})
+    ->middleware(['auth', 'signed'])
+    ->name('verification.verify');
 
-// 認証メール再送
 Route::post('/email/verification-notification', function (Request $request) {
     $request->user()->sendEmailVerificationNotification();
     return back()->with('message', '認証メールを再送しました。');
-})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
+})
+    ->middleware(['auth', 'throttle:6,1'])
+    ->name('verification.send');
 
-// ===================================================
-// 一般ユーザー向けルート（ログイン＋メール認証必須）
-// ===================================================
+/*
+|--------------------------------------------------------------------------
+| 一般ユーザー向け（PG01〜PG06）
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // 出勤登録画面
     Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
     Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
 
-    // 勤怠一覧
     Route::get('/attendance/list', [AttendanceController::class, 'list'])->name('attendance.list');
+    Route::get('/attendance/detail/{id}', [AttendanceController::class, 'show'])->name('attendance.show');
 
-    // 勤怠詳細
-    Route::get('/attendance/detail/{date}', [AttendanceController::class, 'show'])->name('attendance.show');
-
-    // 勤怠修正申請
-    Route::post('/stamp_correction_request/store', [AttendanceCorrectionRequestController::class, 'store'])
-        ->name('correction_request.store');
-
-    // 修正申請一覧
+    // 修正申請関連（ユーザー）
     Route::get('/stamp_correction_request/list', [AttendanceCorrectionRequestController::class, 'index'])
         ->name('correction_request.index');
 
-    // 修正申請詳細
+    Route::post('/stamp_correction_request/store', [AttendanceCorrectionRequestController::class, 'store'])
+        ->name('correction_request.store');
+
     Route::get('/stamp_correction_request/detail/{id}', [AttendanceCorrectionRequestController::class, 'show'])
         ->name('correction_request.show');
 });
 
-// ===================================================
-// 管理者向けルート
-// ===================================================
+/*
+|--------------------------------------------------------------------------
+| 管理者向け（PG07～PG13）
+|--------------------------------------------------------------------------
+*/
 
 // 管理者ログイン
 Route::get('/admin/login', [AdminLoginController::class, 'showLoginForm'])->name('admin.login');
 Route::post('/admin/login', [AdminLoginController::class, 'login'])->name('admin.login.submit');
 Route::post('/admin/logout', [AdminLoginController::class, 'logout'])->name('admin.logout');
 
-// 管理者専用エリア（auth:admin ミドルウェア）
+
+// prefix admin
 Route::middleware(['auth:admin'])->prefix('admin')->group(function () {
 
-    // 勤怠一覧（全社員）
-    Route::get('/attendance/list', [AdminAttendanceController::class, 'index'])->name('admin.attendance.list');
+    Route::get('/attendance/list', [AdminAttendanceController::class, 'index'])
+        ->name('admin.attendance.list');
 
-    // 勤怠詳細（特定社員）
-    Route::get('/attendance/{id}', [AdminAttendanceController::class, 'show'])->name('admin.attendance.show');
+    Route::get('/attendance/{id}', [AdminAttendanceController::class, 'show'])
+        ->name('admin.attendance.show');
 
-    // スタッフ一覧
-    Route::get('/staff/list', [AdminStaffController::class, 'index'])->name('admin.staff.list');
+    Route::put('/attendance/{id}', [AdminAttendanceController::class, 'update'])
+        ->name('admin.attendance.update');
 
-    // 特定スタッフの勤怠履歴
+    Route::get('/staff/list', [AdminStaffController::class, 'index'])
+        ->name('admin.staff_list');
+
     Route::get('/attendance/staff/{id}', [AdminAttendanceController::class, 'staffAttendances'])
         ->name('admin.attendance.staff');
 
-    // 勤怠修正申請一覧（全ユーザー）
-    Route::get('/stamp_correction_request/list', [AdminAttendanceCorrectionRequestController::class, 'index'])
-        ->name('admin.correction_request.list');
-
-    // 修正申請承認
-    Route::put('/stamp_correction_request/approve/{attendance_correction_request_id}', [AdminAttendanceCorrectionRequestController::class, 'approve'])
-        ->name('admin.correction_request.approve');
+    // 管理者 修正申請一覧（admin/ 配下版）
+    Route::get('/correction_request/list', [AdminAttendanceCorrectionRequestController::class, 'index'])
+        ->name('admin.correction_request.index');
 });
+
+/*
+|--------------------------------------------------------------------------
+| 管理者版：同じパス（/stamp_correction_request/list）
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth:admin'])
+    ->get('/stamp_correction_request/list', [AdminAttendanceCorrectionRequestController::class, 'index'])
+    ->name('admin.correction_request.list');
+
+/*
+|--------------------------------------------------------------------------
+| 管理者版：修正申請詳細（※これが不足していた）
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth:admin'])
+    ->get('/stamp_correction_request/detail/{id}', [AdminAttendanceCorrectionRequestController::class, 'show'])
+    ->name('admin.correction_request.show');
+
+/*
+|--------------------------------------------------------------------------
+| 管理者：承認処理
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth:admin'])
+    ->put('/stamp_correction_request/approve/{attendance_correction_request_id}',
+        [AdminAttendanceCorrectionRequestController::class, 'approve'])
+    ->name('admin.correction_request.approve');
