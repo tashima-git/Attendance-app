@@ -51,26 +51,29 @@ h1 {
     margin-right: 120px;
 }
 
+/* 時間表示の行 */
 .time-row {
     display: flex;
     align-items: center;
-    gap: 40px;
+    gap: 20px;
+    /* アイテム間のスペース */
 }
 
-.time-input {
-    width: 100px;
-    padding: 3px 12px;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    font-size: 14px;
+.time-value {
+    min-width: 80px;
+    /* 時間表示の最小幅を指定 */
     text-align: center;
+    /* 中央寄せ */
     font-weight: bold;
+    font-size: 16px;
 }
 
+/* セパレーター */
 .time-separator {
+    margin: 0 10px;
     color: #737373;
+    font-weight: normal;
 }
-
 .note-input {
     width: 100%;
     padding: 12px;
@@ -120,9 +123,22 @@ h1 {
     flex-direction: column;
 }
 
+/* 承認済みボタン用 */
+.approved-button {
+    background-color: #ccc;
+    /* 薄いグレー */
+    color: #666;
+    /* 文字色も薄く */
+    cursor: not-allowed;
+}
+.approved-button:hover {
+    background-color: #ccc;
+}
+
 .error-message {
     color: #f77879;
-    font-size: 12px;
+    font-size: 10px;
     margin-top: 2px;
+    font-weight: bold;
     display: block;
 }

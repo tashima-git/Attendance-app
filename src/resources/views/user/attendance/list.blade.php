@@ -101,9 +101,16 @@
                 <td>{{ $attendance ? $total : '' }}</td>
 
                 <td>
-                    <a href="{{ route('attendance.show', ['date' => $dayStr]) }}" class="status status-calculated">
-                        詳細
-                    </a>
+                    @php
+    $att = $attendanceMap[$dayStr] ?? null;
+@endphp
+
+<a href="{{ route('attendance.show', $dayStr) }}" class="status status-calculated">
+    詳細
+</a>
+
+
+
                 </td>
             </tr>
 

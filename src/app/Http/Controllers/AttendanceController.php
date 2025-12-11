@@ -166,58 +166,88 @@ class AttendanceController extends Controller
     /**
      * 月次勤怠一覧（HH:MM 表示・休憩 HH:MM 表示）
      */
-    public function list(Request $request)
-    {
-        $user = Auth::user();
-        $month = $request->input('month', Carbon::now()->format('Y-m'));
+public function list(Request $request)
+{
+    $user = Auth::user();
 
-        $start = Carbon::parse($month)->startOfMonth();
-        $end   = Carbon::parse($month)->endOfMonth();
+    // 対象月（YYYY-MM）。指定が無ければ今月
+    $month = $request->input('month', Carbon::now()->format('Y-m'));
 
-        $attendances = Attendance::with('breakTimes')
-            ->where('user_id', $user->id)
-            ->whereBetween('work_date', [$start, $end])
-            ->orderBy('work_date')
-            ->get();
+    // 月初〜月末
+    $start = Carbon::createFromFormat('Y-m', $month)->startOfMonth();
+    $end   = Carbon::createFromFormat('Y-m', $month)->endOfMonth();
 
-        // 日付キー化 + 勤務時間・休憩時間計算
-        $attendanceMap = $attendances->mapWithKeys(function ($attendance) {
-            $dateKey = Carbon::parse($attendance->work_date)->format('Y-m-d');
+    // 対象月の勤怠情報を取得
+    $attendances = Attendance::with('breakTimes')
+        ->where('user_id', $user->id)
+        ->whereBetween('work_date', [$start, $end])
+        ->orderBy('work_date')
+        ->get();
 
-            // 勤務時間（分）
-            $totalMinutes = 0;
-            if ($attendance->clock_in && $attendance->clock_out) {
-                $in  = Carbon::parse($attendance->clock_in);
-                $out = Carbon::parse($attendance->clock_out);
-                $totalMinutes = $in->diffInMinutes($out)
-                                - $attendance->breakTimes->sum('total_break_time');
-                $totalMinutes = max($totalMinutes, 0);
-            }
+    /**
+     * 日付キー化して Blade 側が
+     * $attendanceMap['2025-01-03'] のように参照できるようにする。
+     * 
+     * 勤務時間・休憩時間はここで計算して attribute として埋める。
+     */
+    $attendanceMap = $attendances->mapWithKeys(function ($attendance) {
 
-            // HH:MM に変換
-            $attendance->setAttribute(
-                'total_work_time_hm',
-                sprintf('%02d:%02d', floor($totalMinutes / 60), $totalMinutes % 60)
-            );
+        $dateKey = Carbon::parse($attendance->work_date)->format('Y-m-d');
 
-            // 休憩時間
-            $breakMinutes = $attendance->breakTimes->sum('total_break_time');
-            $attendance->setAttribute(
-                'break_hm',
-                sprintf('%02d:%02d', floor($breakMinutes / 60), $breakMinutes % 60)
-            );
+        /*--------------------------
+         * 勤務時間（分）計算
+         *--------------------------*/
+        $totalMinutes = 0;
 
-            return [$dateKey => $attendance];
-        });
+        if ($attendance->clock_in && $attendance->clock_out) {
 
-        return view('user.attendance.list', compact('attendanceMap', 'month', 'start', 'end'));
-    }
+            $in  = Carbon::parse($attendance->clock_in);
+            $out = Carbon::parse($attendance->clock_out);
+
+            // 勤務時間 ー 休憩時間
+            $totalMinutes = $in->diffInMinutes($out)
+                            - $attendance->breakTimes->sum('total_break_time');
+
+            // 負数なら 0 に丸める
+            $totalMinutes = max($totalMinutes, 0);
+        }
+
+        // HH:MM に変換して属性として追加
+        $attendance->setAttribute(
+            'total_work_time_hm',
+            sprintf('%02d:%02d', floor($totalMinutes / 60), $totalMinutes % 60)
+        );
+
+        /*--------------------------
+         * 休憩合計（分 → HH:MM）
+         *--------------------------*/
+        $breakMinutes = $attendance->breakTimes->sum('total_break_time');
+
+        $attendance->setAttribute(
+            'break_hm',
+            sprintf('%02d:%02d', floor($breakMinutes / 60), $breakMinutes % 60)
+        );
+
+        /*--------------------------
+         * mapWithKeys の return
+         * 日付キー => attendance モデル
+         *--------------------------*/
+        return [$dateKey => $attendance];
+    });
+
+    // Blade に渡す
+    return view(
+        'user.attendance.list',
+        compact('attendanceMap', 'month', 'start', 'end')
+    );
+}
 
     /**
      * 勤怠詳細（勤怠が無い日でも安全に表示）
      */
-    public function show($date)
+    public function show($id)
     {
+        $date = $id;
         $user = Auth::user();
 
         $attendance = Attendance::with(['breakTimes', 'user', 'correctionRequests'])

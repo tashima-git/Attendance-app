@@ -17,9 +17,11 @@ class AttendanceCorrectionRequestController extends Controller
      */
     public function index(Request $request)
     {
+        $user = auth()->user();
+
         $status = $request->get('status', 'pending');
 
-        $requests = AttendanceCorrectionRequest::where('user_id', Auth::id())
+        $requests = AttendanceCorrectionRequest::where('user_id', $user->id)
             ->where('status', $status)
             ->with(['attendance', 'correctionBreakTimes'])
             ->orderBy('created_at', 'desc')
@@ -33,7 +35,9 @@ class AttendanceCorrectionRequestController extends Controller
      */
     public function show($id)
     {
-        $correctionRequest = AttendanceCorrectionRequest::where('user_id', Auth::id())
+        $user = auth()->user();
+
+        $correctionRequest = AttendanceCorrectionRequest::where('user_id', $user->id)
             ->with(['attendance', 'correctionBreakTimes'])
             ->findOrFail($id);
 
@@ -45,14 +49,16 @@ class AttendanceCorrectionRequestController extends Controller
      */
     public function store(AttendanceCorrectionRequestRequest $request)
     {
-        // 勤怠データの存在を確認（無ければ null 許容）
+        $user = auth()->user();
+
+        // 勤怠データの存在確認
         $attendance = Attendance::where('id', $request->attendance_id)
-            ->where('user_id', Auth::id())
+            ->where('user_id', $user->id)
             ->first();
 
-        // 修正申請本体を作成（attendance_id が無くても work_date で紐付け可能）
+        // 修正申請本体
         $correctionRequest = AttendanceCorrectionRequest::create([
-            'user_id'       => Auth::id(),
+            'user_id'       => $user->id,
             'attendance_id' => $attendance->id ?? null,
             'work_date'     => $request->work_date,
             'clock_in'      => $request->clock_in,
@@ -61,7 +67,7 @@ class AttendanceCorrectionRequestController extends Controller
             'status'        => 'pending',
         ]);
 
-        // 休憩入力がある場合のみ保存
+        // 休憩
         if ($request->filled('breaks')) {
             foreach ($request->breaks as $break) {
                 if (!empty($break['break_start']) && !empty($break['break_end'])) {
@@ -84,7 +90,7 @@ class AttendanceCorrectionRequestController extends Controller
     }
 
     /**
-     * 休憩時間の合計（分）を計算
+     * 休憩時間の合計（分）
      */
     private function calcBreakMinutes(string $start, string $end): int
     {
@@ -93,7 +99,7 @@ class AttendanceCorrectionRequestController extends Controller
             $endTime   = Carbon::createFromFormat('H:i', $end);
             return $startTime->diffInMinutes($endTime);
         } catch (\Exception $e) {
-            return 0; // 不正な時間フォーマットの場合でも落ちないように
+            return 0;
         }
     }
 }

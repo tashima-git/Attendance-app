@@ -21,10 +21,8 @@ class AttendanceCorrectionRequestController extends Controller
             return redirect()->route('admin.login');
         }
 
-        // タブ切替用：?status=pending|approved（デフォルト pending）
         $status = $request->query('status', 'pending');
 
-        // クエリ生成
         $query = AttendanceCorrectionRequest::with(['user', 'attendance']);
 
         if ($status === 'pending') {
@@ -33,13 +31,11 @@ class AttendanceCorrectionRequestController extends Controller
             $query->where('status', 'approved');
         }
 
-        $requests = $query
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+        $requests = $query->orderBy('created_at', 'desc')->paginate(20);
 
         return view('admin.attendanceCorrectionRequest.list', [
             'requests' => $requests,
-            'status'   => $status,   // ← Blade に渡す
+            'status'   => $status,
         ]);
     }
 
@@ -52,8 +48,11 @@ class AttendanceCorrectionRequestController extends Controller
             return redirect()->route('admin.login');
         }
 
-        $requestData = AttendanceCorrectionRequest::with(['user', 'attendance'])
-            ->findOrFail($id);
+        $requestData = AttendanceCorrectionRequest::with([
+            'user',
+            'attendance',
+            'correctionBreakTimes', // 休憩リレーションもロード
+        ])->findOrFail($id);
 
         return view('admin.attendanceCorrectionRequest.approve', compact('requestData'));
     }
@@ -67,35 +66,44 @@ class AttendanceCorrectionRequestController extends Controller
             return redirect()->route('admin.login');
         }
 
-        $requestData = AttendanceCorrectionRequest::findOrFail($id);
+        $requestData = AttendanceCorrectionRequest::with('correctionBreakTimes')->findOrFail($id);
 
         DB::beginTransaction();
         try {
-            // 勤怠データ更新
-            $attendance = Attendance::findOrFail($requestData->attendance_id);
+            // 勤怠データ取得
+            $attendance = $requestData->attendance;
+
+            // 勤怠情報更新
             $attendance->update([
-                'clock_in'    => $requestData->clock_in,
-                'break_start' => $requestData->break_start,
-                'break_end'   => $requestData->break_end,
-                'clock_out'   => $requestData->clock_out,
+                'clock_in'  => $requestData->clock_in,
+                'clock_out' => $requestData->clock_out,
+                'remarks'   => $requestData->remarks,
             ]);
 
-            // 申請ステータス更新
+            // 休憩情報を申請内容で上書き
+            $attendance->breakTimes()->delete(); // 既存休憩を削除
+            foreach ($requestData->correctionBreakTimes as $break) {
+                $attendance->breakTimes()->create([
+                    'break_start' => $break->break_start,
+                    'break_end'   => $break->break_end,
+                ]);
+            }
+
+            // 申請ステータスを承認に更新
             $requestData->update([
-                'status'       => 'approved',
-                'approved_by'  => Auth::guard('admin')->id(),
-                'approved_at'  => now(),
+                'status'      => 'approved',
+                'approved_by' => Auth::guard('admin')->id(),
+                'approved_at' => now(),
             ]);
 
             DB::commit();
 
             return redirect()
-                ->route('admin.correction_request.index', ['status' => 'pending'])
+                ->route('admin.correction_request.list', ['status' => 'pending'])
                 ->with('success', '申請を承認しました。');
 
         } catch (\Exception $e) {
             DB::rollBack();
-
             return back()->with('error', '承認処理中にエラーが発生しました。');
         }
     }

@@ -125,8 +125,40 @@
     font-size: 16px;
 }
 
-/* ページネーション */
-.pagination-wrapper {
-    margin-top: 25px;
-    text-align: center;
+.pagination-wrapper ul.pagination {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+}
+
+.pagination-wrapper ul.pagination li {
+    margin: 0 4px;
+}
+
+.pagination-wrapper ul.pagination li a {
+    display: block;
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    color: #333;
+    text-decoration: none;
+}
+
+.pagination-wrapper ul.pagination li.active a {
+    background: #333;
+    color: #fff;
+    border-color: #333;
+}
+
+.pagination-wrapper ul.pagination li.disabled a {
+    opacity: 0.4;
+    pointer-events: none;
+    cursor: default;
+}
+
+.pagination-wrapper ul.pagination li a:hover {
+    background: #eee;
 }

@@ -19,6 +19,7 @@ use Laravel\Fortify\Http\Requests\RegisterRequest as FortifyRegisterRequest;
 use Laravel\Fortify\Http\Requests\LoginRequest as FortifyLoginRequest;
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Validation\ValidationException;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -27,7 +28,7 @@ class FortifyServiceProvider extends ServiceProvider
         // 会員登録時のユーザー作成
         $this->app->singleton(CreatesNewUsers::class, CreateNewUser::class);
 
-        // ログイン失敗メッセージを日本語に置き換え
+        // ログイン失敗メッセージを日本語化
         $this->app->singleton(
             FailedLoginResponse::class,
             FailedLoginAttemptResponse::class
@@ -56,26 +57,33 @@ class FortifyServiceProvider extends ServiceProvider
 
         /**
          * =============================
-         * 3. 認証（一般 / 管理者）
+         * 3. 認証処理（一般 / 管理者）
          * =============================
          */
         Fortify::authenticateUsing(function (Request $request) {
 
-            // 管理者ログイン処理
+            // 管理者ログイン
             if ($request->is('admin/login')) {
                 $admin = Admin::where('email', $request->email)->first();
                 if ($admin && Hash::check($request->password, $admin->password)) {
                     return $admin;
                 }
-                return null;
+
+                // 失敗時は日本語メッセージ
+                throw ValidationException::withMessages([
+                    'email' => ['ログイン情報が登録されていません'],
+                ]);
             }
 
-            // 一般ユーザーログイン処理
+            // 一般ユーザー
             $user = User::where('email', $request->email)->first();
             if ($user && Hash::check($request->password, $user->password)) {
                 return $user;
             }
-            return null;
+
+            throw ValidationException::withMessages([
+                'email' => ['ログイン情報が登録されていません'],
+            ]);
         });
 
         /**
@@ -83,7 +91,6 @@ class FortifyServiceProvider extends ServiceProvider
          * 4. FormRequest を Fortify に適用
          * =============================
          */
-
         // Register Request 差し替え
         $this->app->resolving(FortifyRegisterRequest::class, function () {
             return app(RegisterRequest::class);

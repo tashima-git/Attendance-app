@@ -65,13 +65,20 @@
                 <td>{{ $req->created_at->format('Y/m/d') }}</td>
 
                 {{-- 詳細リンク --}}
+@php
+    $targetDate = $req->work_date ?? ($req->attendance->work_date ?? null);
+@endphp
+
 <td>
-    <a href="{{ $req->work_date 
-                ? route('attendance.show', ['date' => $req->work_date]) 
-                : ($req->attendance ? route('attendance.show', ['date' => $req->attendance->work_date]) : '#') }}">
-        詳細
-    </a>
+    @if ($targetDate)
+        <a href="{{ route('attendance.show', ['id' => $targetDate]) }}">
+            詳細
+        </a>
+    @else
+        ―
+    @endif
 </td>
+
 
             </tr>
         @empty
