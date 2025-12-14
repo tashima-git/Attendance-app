@@ -18,7 +18,7 @@ class AttendanceRequest extends FormRequest
             'clock_out'    => 'nullable|date_format:H:i',
             'break_start'  => 'nullable|date_format:H:i',
             'break_end'    => 'nullable|date_format:H:i',
-            'note'         => 'required|string', // 備考必須
+            'remarks'         => 'required|string', // 備考必須
         ];
     }
 
@@ -29,7 +29,7 @@ class AttendanceRequest extends FormRequest
             'clock_out.date_format'    => '退勤時刻の形式が不正です（例：18:00）。',
             'break_start.date_format'  => '休憩開始時刻の形式が不正です（例：12:00）。',
             'break_end.date_format'    => '休憩終了時刻の形式が不正です（例：13:00）。',
-            'note.required'            => '備考を記入してください',
+            'remarks.required'            => '備考を記入してください',
         ];
     }
 

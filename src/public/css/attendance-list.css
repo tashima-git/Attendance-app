@@ -108,3 +108,24 @@ tbody tr:hover {
     color: #737373;
 }
 
+.btn {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 30px;
+}
+
+.btn-csv {
+    background-color: #000;
+    color: #fff;
+    border: none;
+    padding: 7px 30px;
+    border-radius: 6px;
+    font-size: 22px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-csv:hover {
+    opacity: 0.8;
+}

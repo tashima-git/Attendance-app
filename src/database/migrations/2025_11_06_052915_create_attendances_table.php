@@ -19,7 +19,7 @@ return new class extends Migration {
             $table->date('work_date')->nullable(false);
 
             // 出勤・退勤
-            $table->time('clock_in')->nullable(false);
+            $table->time('clock_in')->nullable();
             $table->time('clock_out')->nullable();
 
             // 勤務時間（分）

@@ -124,7 +124,7 @@ class FortifyServiceProvider extends ServiceProvider
          * 6. メール認証画面
          * =============================
          */
-        Fortify::verifyEmailView(fn() => view('user.auth.verify-email'));
+        Fortify::verifyEmailView(fn() => view('user.auth.verify_email'));
         Fortify::redirects('/email/verify');
 
         /**

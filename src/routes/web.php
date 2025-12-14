@@ -149,6 +149,10 @@ Route::middleware(['auth:admin'])
             [AdminAttendanceController::class, 'staffAttendances']
         )->name('attendance.staff');
 
+        Route::get('/attendance/staff/{id}/csv',
+            [AdminAttendanceController::class, 'exportCsv']
+        )->name('attendance.staff.csv');
+
         Route::get('/correction-request/list',
             [AdminAttendanceCorrectionRequestController::class, 'index']
         )->name('correction_request.list');

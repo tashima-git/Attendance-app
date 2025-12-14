@@ -91,22 +91,23 @@
             <tr>
                 <td class="date-cell">{{ $loopDate->format('m/d') }}({{ $w }})</td>
 
-                <td>{{ $in }}</td>
-                <td>{{ $out }}</td>
+<td>{{ $in }}</td>
+<td>{{ $out }}</td>
 
-                <td>{{ $attendance ? $break : '' }}</td>
+<td>{{ $attendance && $break && $break !== '00:00' ? $break : '' }}</td>
+<td>{{ $attendance && $total && $total !== '00:00' ? $total : '' }}</td>
 
-                <td>{{ $attendance ? $total : '' }}</td>
 
-                <td>
-                    @if ($attendance)
-                        <a href="{{ route('admin.attendance.show', ['id' => $attendance->id]) }}"
-   class="status status-calculated">
+<td>
+<a href="{{ route('admin.attendance.show', [
+    'id' => $attendance ? $attendance->id : 0,
+    'user_id' => $user->id,
+    'work_date' => $loopDate->format('Y-m-d')
+]) }}" class="status status-calculated">
     詳細
 </a>
 
-                    @endif
-                </td>
+</td>
             </tr>
 
             @php $loopDate->addDay(); @endphp
@@ -115,6 +116,14 @@
 
         </tbody>
     </table>
+
+    <div class="btn">
+    <form method="GET" action="{{ route('admin.attendance.staff.csv', ['id' => $staff->id]) }}">
+    <input type="hidden" name="month" value="{{ $month }}">
+    <button type="submit" class="btn-csv">CSVダウンロード</button>
+</form>
+</div>
+
 </div>
 
 <script>
