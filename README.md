@@ -130,6 +130,7 @@ php artisan test
 - 開発環境 <br>
   一般ユーザーログイン画面: [http://localhost/](http://localhost/) <br>
   管理者ログイン画面: [http://localhost/admin/login](http://localhost/admin/login)
+  
 - phpMyAdmin: [http://localhost:8080/](http://localhost:8080/)
 
 ## 補足事項
