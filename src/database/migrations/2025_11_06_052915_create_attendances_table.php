@@ -11,9 +11,10 @@ return new class extends Migration {
             $table->id();
 
             // 紐づくユーザー
-            $table->foreignId('user_id')
-                ->constrained('users')
-                ->onDelete('cascade');
+            $table->unsignedBigInteger('user_id');
+
+            // SQLiteでは外部キー制約が動作するためにはPRAGMA foreign_keys=ON
+            // Laravelのテスト環境では RefreshDatabase を使うと自動でONになる
 
             // 勤務日
             $table->date('work_date')->nullable(false);
@@ -29,6 +30,9 @@ return new class extends Migration {
             $table->text('remarks')->nullable();
 
             $table->timestamps();
+
+            // 外部キー制約（SQLiteでも使える）
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

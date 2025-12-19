@@ -99,11 +99,8 @@
 
 
 <td>
-<a href="{{ route('admin.attendance.show', [
-    'id' => $attendance ? $attendance->id : 0,
-    'user_id' => $user->id,
-    'work_date' => $loopDate->format('Y-m-d')
-]) }}" class="status status-calculated">
+<a href="{{ url("/admin/attendance/{$user->id}?date={$loopDate->format('Y-m-d')}") }}"
+    class="status status-calculated">
     詳細
 </a>
 

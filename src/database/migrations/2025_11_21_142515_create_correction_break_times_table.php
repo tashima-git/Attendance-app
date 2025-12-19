@@ -15,8 +15,8 @@ return new class extends Migration {
                 ->constrained('attendance_correction_requests')
                 ->onDelete('cascade');
 
-            $table->time('break_start')->nullable(false);
-            $table->time('break_end')->nullable(false);
+            $table->time('break_start');
+            $table->time('break_end');
 
             // 分単位の休憩時間
             $table->integer('total_break_time')->nullable();

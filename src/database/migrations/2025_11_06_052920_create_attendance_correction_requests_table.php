@@ -11,41 +11,23 @@ return new class extends Migration
         Schema::create('attendance_correction_requests', function (Blueprint $table) {
             $table->id();
 
-            // 紐づく勤怠データ（nullableにして、勤怠が無くても申請可能）
-            $table->foreignId('attendance_id')
-                ->nullable()
-                ->constrained('attendances')
-                ->nullOnDelete(); // 勤怠削除時はnullに
+            $table->unsignedBigInteger('attendance_id')->nullable();
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('approved_by')->nullable();
 
-            // 申請対象日（勤怠が無い日も指定可能）
             $table->date('work_date')->nullable();
-
-            // 申請したユーザー
-            $table->foreignId('user_id')
-                ->constrained('users')
-                ->onDelete('cascade');
-
-            // 申請後の出退勤（nullableにして、未入力でも申請可能）
             $table->time('clock_in')->nullable();
             $table->time('clock_out')->nullable();
-
-            // 備考
             $table->string('remarks', 255)->nullable();
-
-            // ステータス
-            $table->enum('status', ['pending', 'approved'])
-                ->default('pending');
-
-            // 承認した管理者
-            $table->foreignId('approved_by')
-                ->nullable()
-                ->constrained('admins')
-                ->nullOnDelete();
-
-            // 承認日時
+            $table->enum('status', ['pending', 'approved'])->default('pending');
             $table->timestamp('approved_at')->nullable();
 
             $table->timestamps();
+
+            // 外部キー制約
+            $table->foreign('attendance_id')->references('id')->on('attendances')->onDelete('set null');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('approved_by')->references('id')->on('admins')->onDelete('set null');
         });
     }
 

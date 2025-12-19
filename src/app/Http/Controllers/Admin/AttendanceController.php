@@ -15,66 +15,55 @@ class AttendanceController extends Controller
     /**
      * 管理者：特定日の勤怠一覧
      */
-    public function index(Request $request)
-    {
-        if (!Auth::guard('admin')->check()) {
-            return redirect()->route('admin.login');
-        }
-
-        $date = $request->input('date', Carbon::today()->format('Y-m-d'));
-
-        if (!$this->isValidDate($date)) {
-            $date = Carbon::today()->format('Y-m-d');
-        }
-
-        $attendances = Attendance::with(['user', 'breakTimes'])
-            ->whereDate('work_date', $date)
-            ->orderBy('user_id')
-            ->get()
-            ->map(fn($a) => $this->calculateTimes($a));
-
-        return view('admin.attendance.list', compact('attendances', 'date'));
+public function index(Request $request)
+{
+    if (!Auth::guard('admin')->check()) {
+        return redirect()->route('admin.login');
     }
+
+    $dayParam = $request->input('day'); // prev / next
+    if ($dayParam === 'prev') {
+        $date = Carbon::yesterday()->format('Y-m-d');
+    } elseif ($dayParam === 'next') {
+        $date = Carbon::tomorrow()->format('Y-m-d');
+    } else {
+        $date = $request->input('date', Carbon::today()->format('Y-m-d'));
+    }
+
+    if (!$this->isValidDate($date)) {
+        $date = Carbon::today()->format('Y-m-d');
+    }
+
+    $attendances = Attendance::with(['user', 'breakTimes'])
+        ->whereDate('work_date', $date)
+        ->orderBy('user_id')
+        ->get()
+        ->map(fn($a) => $this->calculateTimes($a));
+
+    return view('admin.attendance.list', compact('attendances', 'date'));
+}
+
 
     /**
      * 管理者：勤怠詳細
      */
 public function show(Request $request, $id)
 {
-    if (!Auth::guard('admin')->check()) {
-        return redirect()->route('admin.login');
-    }
+    $date = $request->query('date'); // YYYY-MM-DD
+    abort_unless($date, 404);
 
-    // Blade から user_id と work_date を受け取る場合
-    $userId    = $request->query('user_id');
-    $workDate  = $request->query('work_date');
+    // 勤怠が存在するか探す
+    $attendance = Attendance::where('user_id', $id)
+        ->whereDate('work_date', $date)
+        ->first();
 
-    if ($id > 0) {
-        // 既存IDがある場合
-        $attendance = Attendance::with(['user', 'breakTimes'])->find($id);
-    } else {
-        // 新規作成も可能
-        if (!$userId || !$workDate) {
-            abort(404, '対象ユーザーまたは日付が指定されていません。');
-        }
-
-        $attendance = Attendance::with('breakTimes')->firstOrCreate(
-            [
-                'user_id'   => $userId,
-                'work_date' => $workDate,
-            ],
-            [
-                'clock_in'  => null,
-                'clock_out' => null,
-                'remarks'   => '',
-            ]
-        );
-    }
-
-    $attendance = $this->calculateTimes($attendance);
-
-    return view('admin.attendance.detail', compact('attendance'));
+    return view('admin.attendance.detail', [
+        'attendance' => $attendance, // null OK
+        'user'       => User::findOrFail($id),
+        'date'       => $date,
+    ]);
 }
+
 
 
     /**
@@ -127,47 +116,47 @@ public function show(Request $request, $id)
      */
 public function update(AttendanceAdminUpdateRequest $request, $id)
 {
-$validated = $request->validated();
-
-// Attendance を取得（存在しなければ作成）
-$attendance = Attendance::with('breakTimes')->find($id);
-if (!$attendance) {
     $attendance = Attendance::firstOrCreate(
-        ['user_id' => $request->user_id, 'work_date' => $request->work_date],
         [
-            'clock_in'  => $request->clock_in ? $request->work_date . ' ' . $request->clock_in : null,
-            'clock_out' => $request->clock_out ? $request->work_date . ' ' . $request->clock_out : null,
-            'remarks'   => $request->remarks,
+            'user_id'   => $id,
+            'work_date' => $request->work_date,
         ]
     );
-} else {
-    // 既存勤怠の更新
-    $attendance->clock_in  = $request->filled('clock_in')  ? $attendance->work_date . ' ' . $request->clock_in : null;
-    $attendance->clock_out = $request->filled('clock_out') ? $attendance->work_date . ' ' . $request->clock_out : null;
-    $attendance->remarks   = $request->remarks;
-    $attendance->save();
 
-    // 既存休憩削除
+    // 出退勤（必ず日付付きで保存）
+    $attendance->update([
+        'clock_in'  => $request->clock_in
+            ? $request->work_date . ' ' . $request->clock_in
+            : null,
+        'clock_out' => $request->clock_out
+            ? $request->work_date . ' ' . $request->clock_out
+            : null,
+        'remarks'   => $request->remarks,
+    ]);
+
+    /** 既存休憩を削除 */
     $attendance->breakTimes()->delete();
-}
 
-// 休憩時間追加（新規も更新も共通）
-if ($request->has('breaks')) {
-    foreach ($request->breaks as $break) {
-        if (!empty($break['break_start']) || !empty($break['break_end'])) {
-            $attendance->breakTimes()->create([
-                'break_start' => $attendance->work_date . ' ' . ($break['break_start'] ?? null),
-                'break_end'   => $attendance->work_date . ' ' . ($break['break_end'] ?? null),
-            ]);
+    /** 休憩時間保存 */
+    if ($request->filled('breaks')) {
+        foreach ($request->breaks as $break) {
+            if (!empty($break['break_start']) || !empty($break['break_end'])) {
+                $attendance->breakTimes()->create([
+                    'break_start' => $break['break_start']
+                        ? $request->work_date . ' ' . $break['break_start']
+                        : null,
+                    'break_end'   => $break['break_end']
+                        ? $request->work_date . ' ' . $break['break_end']
+                        : null,
+                ]);
+            }
         }
     }
+
+    return back()->with('success', '勤怠を保存しました');
 }
 
-return redirect()
-    ->route('admin.attendance.show', $attendance->id)
-    ->with('success', '勤怠を更新しました。');
 
-}
 
 
     /* =========================

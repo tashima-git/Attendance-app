@@ -14,6 +14,7 @@ class AttendanceAdminUpdateRequest extends FormRequest
     public function rules()
     {
         return [
+            'work_date' => ['required', 'date'],
             // 出勤 & 退勤
             'clock_in'  => ['nullable', 'date_format:H:i', 'before:clock_out'],
             'clock_out' => ['nullable', 'date_format:H:i', 'after:clock_in'],

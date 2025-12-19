@@ -9,11 +9,14 @@ return new class extends Migration {
     {
         Schema::create('break_times', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('attendance_id')->constrained('attendances')->onDelete('cascade');
+            $table->unsignedBigInteger('attendance_id');
             $table->time('break_start')->nullable(false);
             $table->time('break_end')->nullable();
             $table->integer('total_break_time')->nullable();
             $table->timestamps();
+
+            // 外部キー制約（SQLiteでも使える）
+            $table->foreign('attendance_id')->references('id')->on('attendances')->onDelete('cascade');
         });
     }
 

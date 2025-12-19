@@ -12,31 +12,49 @@ class EmailVerificationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_verification_email_sent_after_registration()
+    /** @test */
+    public function verification_email_is_sent_to_unverified_user()
     {
         Notification::fake();
-        $user = User::factory()->create(['email_verified_at' => null]);
 
-        Notification::assertNothingSent();
+        $user = User::factory()->create([
+            'email_verified_at' => null,
+        ]);
+
         $user->sendEmailVerificationNotification();
+
         Notification::assertSentTo($user, VerifyEmail::class);
     }
 
-    public function test_verification_link_redirects_to_attendance_page()
+    /** @test */
+    public function unverified_user_cannot_access_attendance_page()
     {
-        $user = User::factory()->create(['email_verified_at' => null]);
-        $this->actingAs($user);
+        $user = User::factory()->create([
+            'email_verified_at' => null,
+        ]);
 
-        $response = $this->get('/email/verify');
-        $response->assertSee('認証はこちらから');
-    }
-
-    public function test_user_can_access_attendance_after_verification()
-    {
-        $user = User::factory()->create(['email_verified_at' => now()]);
         $this->actingAs($user);
 
         $response = $this->get('/attendance');
-        $response->assertStatus(200);
+
+        $response->assertRedirect('/email/verify');
     }
+
+    /** @test */
+    public function verified_user_can_access_attendance_page()
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->get('/attendance');
+
+        $response->assertStatus(200);
+
+        $this->flushSession();
+auth()->logout();
+    }
+
 }

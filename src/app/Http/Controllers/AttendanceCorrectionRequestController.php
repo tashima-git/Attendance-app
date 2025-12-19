@@ -41,7 +41,9 @@ class AttendanceCorrectionRequestController extends Controller
             ->with(['attendance', 'correctionBreakTimes'])
             ->findOrFail($id);
 
-        return view('user.correction_request_detail', compact('correctionRequest'));
+            $attendance = $correctionRequest->attendance;
+
+        return view('user.attendance.detail', compact('correctionRequest', 'attendance'));
     }
 
     /**

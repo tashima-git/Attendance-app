@@ -31,7 +31,7 @@ class AdminLoginController extends Controller
 
         // 認証失敗時のエラー（仕様準拠）
         return back()->withErrors([
-            'email' => 'ログイン情報が登録されていません。',
+            'email' => 'ログイン情報が登録されていません',
         ])->onlyInput('email');
     }
 

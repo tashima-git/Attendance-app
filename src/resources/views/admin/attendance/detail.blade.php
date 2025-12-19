@@ -6,7 +6,6 @@
 
 <link rel="stylesheet" href="{{ asset('css/attendance-detail.css') }}">
 
-<!-- 更新時のフラッシュメッセージ -->
 @if (session('success'))
     <div class="alert alert-success" style="padding: 10px; background: #d4edda; color: #155724; border-radius: 6px; margin-bottom: 15px;">
         {{ session('success') }}
@@ -16,28 +15,31 @@
 <div class="container">
     <h1>勤怠詳細</h1>
 
-    <form action="{{ route('admin.attendance.update', $attendance->id) }}" method="POST" novalidate>
+    <form
+        action="{{ route('admin.attendance.update', $user->id) }}"
+        method="POST"
+        novalidate
+    >
         @csrf
         @method('PUT')
+
+        {{-- 🔽 新規作成対応（絶対に必要） --}}
+        <input type="hidden" name="work_date" value="{{ $date }}">
 
         <div class="detail-card">
 
             {{-- 名前 --}}
             <div class="detail-row">
                 <div class="detail-label">名前</div>
-                <div class="detail-value">{{ $attendance->user->name ?? '不明' }}</div>
+                <div class="detail-value">{{ $user->name }}</div>
             </div>
 
             {{-- 日付 --}}
             <div class="detail-row">
                 <div class="detail-label">日付</div>
                 <div class="detail-value value-day">
-                    @if($attendance->work_date)
-                        <span class="year">{{ \Carbon\Carbon::parse($attendance->work_date)->format('Y年') }}</span>
-                        <span class="month-day">{{ \Carbon\Carbon::parse($attendance->work_date)->format('n月j日') }}</span>
-                    @else
-                        <span>(日付不明)</span>
-                    @endif
+                    <span class="year">{{ \Carbon\Carbon::parse($date)->format('Y年') }}</span>
+                    <span class="month-day">{{ \Carbon\Carbon::parse($date)->format('n月j日') }}</span>
                 </div>
             </div>
 
@@ -47,9 +49,13 @@
                 <div class="detail-value">
                     <div class="time-row">
                         <div class="input-wrapper">
-                            <input type="text" name="clock_in" class="time-input no-icon"
-                                   value="{{ old('clock_in', $attendance->clock_in ? \Carbon\Carbon::parse($attendance->clock_in)->format('H:i') : '') }}"
-                                   maxlength="5">
+                            <input
+                                type="text"
+                                name="clock_in"
+                                class="time-input no-icon"
+                                maxlength="5"
+                                value="{{ old('clock_in', $attendance?->clock_in ? \Carbon\Carbon::parse($attendance->clock_in)->format('H:i') : '') }}"
+                            >
                             @error('clock_in')
                                 <div class="error-message">{{ $message }}</div>
                             @enderror
@@ -58,9 +64,13 @@
                         <span class="time-separator">～</span>
 
                         <div class="input-wrapper">
-                            <input type="text" name="clock_out" class="time-input no-icon"
-                                   value="{{ old('clock_out', $attendance->clock_out ? \Carbon\Carbon::parse($attendance->clock_out)->format('H:i') : '') }}"
-                                   maxlength="5">
+                            <input
+                                type="text"
+                                name="clock_out"
+                                class="time-input no-icon"
+                                maxlength="5"
+                                value="{{ old('clock_out', $attendance?->clock_out ? \Carbon\Carbon::parse($attendance->clock_out)->format('H:i') : '') }}"
+                            >
                             @error('clock_out')
                                 <div class="error-message">{{ $message }}</div>
                             @enderror
@@ -69,10 +79,10 @@
                 </div>
             </div>
 
-            {{-- 休憩時間 --}}
+            {{-- 休憩 --}}
             @php
-                $breaks = $attendance->breakTimes ?? collect();
-                $breakCount = $breaks->count() + 1;
+                $breaks = $attendance?->breakTimes ?? collect();
+                $breakCount = max($breaks->count() + 1, 1);
             @endphp
 
             @for ($i = 0; $i < $breakCount; $i++)
@@ -82,25 +92,25 @@
                     <div class="detail-value">
                         <div class="time-row">
                             <div class="input-wrapper">
-                                <input type="text" name="breaks[{{ $i }}][break_start]"
-                                       class="time-input no-icon"
-                                       value="{{ old("breaks.$i.break_start", $break && $break->break_start ? \Carbon\Carbon::parse($break->break_start)->format('H:i') : '') }}"
-                                       maxlength="5">
-                                @error("breaks.$i.break_start")
-                                    <div class="error-message">{{ $message }}</div>
-                                @enderror
+                                <input
+                                    type="text"
+                                    name="breaks[{{ $i }}][break_start]"
+                                    class="time-input no-icon"
+                                    maxlength="5"
+                                    value="{{ old("breaks.$i.break_start", $break?->break_start ? \Carbon\Carbon::parse($break->break_start)->format('H:i') : '') }}"
+                                >
                             </div>
 
                             <span class="time-separator">～</span>
 
                             <div class="input-wrapper">
-                                <input type="text" name="breaks[{{ $i }}][break_end]"
-                                       class="time-input no-icon"
-                                       value="{{ old("breaks.$i.break_end", $break && $break->break_end ? \Carbon\Carbon::parse($break->break_end)->format('H:i') : '') }}"
-                                       maxlength="5">
-                                @error("breaks.$i.break_end")
-                                    <div class="error-message">{{ $message }}</div>
-                                @enderror
+                                <input
+                                    type="text"
+                                    name="breaks[{{ $i }}][break_end]"
+                                    class="time-input no-icon"
+                                    maxlength="5"
+                                    value="{{ old("breaks.$i.break_end", $break?->break_end ? \Carbon\Carbon::parse($break->break_end)->format('H:i') : '') }}"
+                                >
                             </div>
                         </div>
                     </div>
@@ -112,7 +122,7 @@
                 <div class="detail-label">備考</div>
                 <div class="detail-value">
                     <div class="input-wrapper">
-                        <textarea name="remarks" class="note-input">{{ old('remarks', $attendance->remarks ?? '') }}</textarea>
+                        <textarea name="remarks" class="note-input">{{ old('remarks', $attendance?->remarks ?? '') }}</textarea>
                         @error('remarks')
                             <div class="error-message">{{ $message }}</div>
                         @enderror

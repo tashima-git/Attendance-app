@@ -87,8 +87,7 @@
                 <td>{{ $break }}</td>
                 <td>{{ $total }}</td>
                 <td>
-                    <a href="{{ route('admin.attendance.show', ['id' => $attendance->id]) }}"
-                       class="status status-calculated">
+                    <a href="{{ route('admin.attendance.show', ['id' => $attendance->user->id, 'date' => $currentDate]) }}" class="status status-calculated">
                         詳細
                     </a>
                 </td>

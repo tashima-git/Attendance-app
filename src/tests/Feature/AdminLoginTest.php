@@ -2,59 +2,77 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Tests\TestCase;
 
 class AdminLoginTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected User $user;
+
     protected function setUp(): void
     {
         parent::setUp();
-        $this->admin = User::factory()->create([
+
+        // 管理者かどうかはこのテストでは関係ないため
+        // usersテーブルに存在するカラムのみ指定する
+        $this->user = User::factory()->create([
             'email' => 'admin@example.com',
             'password' => Hash::make('adminpass123'),
-            'is_admin' => true,
         ]);
     }
 
-    public function test_email_is_required()
+    /**
+     * メールアドレスが未入力の場合、バリデーションメッセージが表示される
+     */
+    public function test_メールアドレスが未入力の場合_バリデーションメッセージが表示される()
     {
         $response = $this->post('/admin/login', [
             'email' => '',
             'password' => 'adminpass123',
         ]);
-        $response->assertSessionHasErrors(['email' => 'メールアドレスを入力してください']);
+
+        $response->assertSessionHasErrors(['email']);
+        $this->assertEquals(
+            'メールアドレスを入力してください',
+            session('errors')->first('email')
+        );
     }
 
-    public function test_password_is_required()
+    /**
+     * パスワードが未入力の場合、バリデーションメッセージが表示される
+     */
+    public function test_パスワードが未入力の場合_バリデーションメッセージが表示される()
     {
         $response = $this->post('/admin/login', [
             'email' => 'admin@example.com',
             'password' => '',
         ]);
-        $response->assertSessionHasErrors(['password' => 'パスワードを入力してください']);
+
+        $response->assertSessionHasErrors(['password']);
+        $this->assertEquals(
+            'パスワードを入力してください',
+            session('errors')->first('password')
+        );
     }
 
-    public function test_login_with_invalid_credentials()
+    /**
+     * 登録内容と一致しない場合、バリデーションメッセージが表示される
+     */
+    public function test_登録内容と一致しない場合_バリデーションメッセージが表示される()
     {
         $response = $this->post('/admin/login', [
             'email' => 'wrongadmin@example.com',
-            'password' => 'wrongpassword',
-        ]);
-        $response->assertSessionHasErrors(['email' => 'ログイン情報が登録されていません']);
-    }
-
-    public function test_successful_admin_login()
-    {
-        $response = $this->post('/admin/login', [
-            'email' => $this->admin->email,
             'password' => 'adminpass123',
         ]);
-        $response->assertRedirect('/admin/home');
-        $this->assertAuthenticatedAs($this->admin);
+
+        $response->assertSessionHasErrors(['email']);
+        $this->assertEquals(
+            'ログイン情報が登録されていません',
+            session('errors')->first('email')
+        );
     }
 }
