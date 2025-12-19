@@ -91,11 +91,11 @@ cp .env .env.testing
 ```dotenv
 DB_CONNECTION=sqlite
 DB_DATABASE=:memory:
-<!-- 以下のDB情報は削除する -->
-<!-- DB_PORT=3306 -->
-<!-- DB_DATABASE=attendance -->
-<!-- DB_USERNAME=laravel -->
-<!-- DB_PASSWORD=laravel -->
+以下のDB情報は削除する
+DB_PORT=3306
+DB_DATABASE=attendance
+DB_USERNAME=laravel
+DB_PASSWORD=laravel
 
 MAIL_MAILER=smtp
 MAIL_HOST=mailpit
