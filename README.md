@@ -128,8 +128,13 @@ php artisan test
 ## URL
 
 - 開発環境 <br>
-  一般ユーザーログイン画面: [http://localhost/](http://localhost/) <br>
+  一般ユーザーログイン画面: [http://localhost/](http://localhost/)
+　テスト用一般ユーザーログインメールアドレス：test@mail.com
+　パスワード：00000000
+  <br>
   管理者ログイン画面: [http://localhost/admin/login](http://localhost/admin/login)
+  管理者用ログインメールアドレス：admin@mail.com
+  パスワード：00000000
   
 - phpMyAdmin: [http://localhost:8080/](http://localhost:8080/)
 
