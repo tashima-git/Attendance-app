@@ -13,7 +13,7 @@ class EmailVerificationTest extends TestCase
     use RefreshDatabase;
 
     /** @test */
-    public function verification_email_is_sent_to_unverified_user()
+    public function 会員登録後、認証メールが送信される()
     {
         Notification::fake();
 
@@ -27,7 +27,7 @@ class EmailVerificationTest extends TestCase
     }
 
     /** @test */
-    public function unverified_user_cannot_access_attendance_page()
+    public function 「認証はこちらから」ボタンを押下するとサイトに遷移する()
     {
         $user = User::factory()->create([
             'email_verified_at' => null,
@@ -41,7 +41,7 @@ class EmailVerificationTest extends TestCase
     }
 
     /** @test */
-    public function verified_user_can_access_attendance_page()
+    public function メール認証を完了すると、勤怠登録画面に遷移する()
     {
         $user = User::factory()->create([
             'email_verified_at' => now(),
