@@ -127,21 +127,24 @@ php artisan test
 
 ## URL
 
-- 開発環境 <br>
-  一般ユーザーログイン画面: [http://localhost/](http://localhost/)
-　テスト用一般ユーザーログインメールアドレス：test@mail.com
-　パスワード：00000000
-  <br>
-  管理者ログイン画面: [http://localhost/admin/login](http://localhost/admin/login)
-  管理者用ログインメールアドレス：admin@mail.com
-  パスワード：00000000
+- 開発環境  
+  一般ユーザーログイン画面: [http://localhost/](http://localhost/)  
+  &emsp;テスト用一般ユーザー（テスト太郎）ログイン  
+  &emsp;&emsp;メールアドレス：test@mail.com  
+  &emsp;&emsp;パスワード：00000000  
+
+
+  管理者ログイン画面: [http://localhost/admin/login](http://localhost/admin/login)  
+  &emsp;管理者用ログイン  
+  &emsp;&emsp;メールアドレス：admin@mail.com  
+  &emsp;&emsp;パスワード：00000000  
   
 - phpMyAdmin: [http://localhost:8080/](http://localhost:8080/)
 
 ## 補足事項
 
-- 今回は SQLite を用いたテストを行っています。
-- メール認証は複数候補があったので今回は Mailhog を使用しています。
+- SQLite を用いたテストを行っています。
+- メール認証は Mailhog を使用しています。
 
 - 開発環境: http://localhost/
 - http://localhost/admin/login
