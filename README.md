@@ -106,7 +106,12 @@ MAIL_FROM_ADDRESS="hello@example.com"
 MAIL_FROM_NAME="${APP_NAME}"
 ```
 
-3. テストを実行する
+3. テスト用ファイルを作成する（初回のみ）
+```bash
+touch database/testing.sqlite
+```
+
+4. テストを実行する
 
 ```bash
 php artisan test
