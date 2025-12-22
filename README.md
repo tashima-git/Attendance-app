@@ -90,8 +90,7 @@ cp .env .env.testing
 
 ```dotenv
 DB_CONNECTION=sqlite
-DB_DATABASE=:memory:
-以下のDB情報は削除する
+DB_DATABASE=/tmp/database.sqlite
 DB_PORT=3306
 DB_DATABASE=attendance
 DB_USERNAME=laravel
@@ -115,9 +114,9 @@ php artisan test
 
 ## 使用技術・実行環境
 
-- PHP: 8.2.29
+- PHP: 8.2.30
 - Laravel: 12.37.0
-- MySQL 8.0.26
+- MySQL 8.0.44
 - Docker / Docker Compose
 - Mailhog (メール送信テスト用)
 
