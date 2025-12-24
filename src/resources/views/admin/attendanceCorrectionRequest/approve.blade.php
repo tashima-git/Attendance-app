@@ -21,8 +21,8 @@
         <div class="detail-row">
             <div class="detail-label">対象日</div>
             <div class="detail-value value-day">
-                <span class="year">{{ \Carbon\Carbon::parse($requestData->attendance->work_date)->format('Y年') }}</span>
-                <span class="month-day">{{ \Carbon\Carbon::parse($requestData->attendance->work_date)->format('n月j日') }}</span>
+                <span class="year">{{ \Carbon\Carbon::parse($requestData->work_date)->format('Y年') }}</span>
+                <span class="month-day">{{ \Carbon\Carbon::parse($requestData->work_date)->format('n月j日') }}</span>
             </div>
         </div>
 

@@ -136,7 +136,7 @@ php artisan test
   &emsp;テスト用一般ユーザー（テスト太郎）ログイン  
   &emsp;&emsp;メールアドレス：test@mail.com  
   &emsp;&emsp;パスワード：00000000  
-
+  (※初回のみメール認証画面に遷移します。再送ボタンを押してから認証画面に遷移して下さい。)  
 
   管理者ログイン画面: [http://localhost/admin/login](http://localhost/admin/login)  
   &emsp;管理者用ログイン  

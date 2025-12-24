@@ -145,7 +145,7 @@ class AttendanceController extends Controller
                     ->sum('total_break_time');
 
                 $attendance->update([
-                    // 🔥 秒ありで統一（重要修正）
+
                     'clock_out' => $clockOut->format('H:i:s'),
                     'total_work_time' => max($totalWorkMinutes - $totalBreakMinutes, 0),
                 ]);
@@ -184,12 +184,7 @@ public function list(Request $request)
         ->orderBy('work_date')
         ->get();
 
-    /**
-     * 日付キー化して Blade 側が
-     * $attendanceMap['2025-01-03'] のように参照できるようにする。
-     * 
-     * 勤務時間・休憩時間はここで計算して attribute として埋める。
-     */
+
     $attendanceMap = $attendances->mapWithKeys(function ($attendance) {
 
         $dateKey = Carbon::parse($attendance->work_date)->format('Y-m-d');
