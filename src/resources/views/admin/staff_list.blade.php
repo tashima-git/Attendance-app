@@ -3,7 +3,6 @@
 @section('title', 'スタッフ一覧')
 
 @section('content')
-
 <link rel="stylesheet" href="{{ asset('css/attendance-list.css') }}">
 
 <h1>スタッフ一覧</h1>
@@ -24,11 +23,9 @@
                 <td>{{ $user->email }}</td>
                 <td>
                     <a href="{{ route('admin.attendance.staff', ['id' => $user->id]) }}"
-   class="status status-calculated">
-    詳細
-</a>
-
-
+                       class="status status-calculated">
+                        詳細
+                    </a>
                 </td>
             </tr>
         @empty
@@ -44,5 +41,4 @@
 <div style="margin-top: 20px;">
     {{ $users->links() }}
 </div>
-
 @endsection

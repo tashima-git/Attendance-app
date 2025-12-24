@@ -33,41 +33,46 @@ class Attendance extends Model
         return $this->hasMany(AttendanceCorrectionRequest::class);
     }
 
+    /**
+     * 休憩合計時間（HH:MM）
+     */
     public function getBreakHmAttribute()
-{
-    if ($this->breakTimes->isEmpty()) {
-        return "00:00";
-    }
-
-    $total = 0;
-    foreach ($this->breakTimes as $bt) {
-        if ($bt->break_start && $bt->break_end) {
-            $total += strtotime($bt->break_end) - strtotime($bt->break_start);
+    {
+        if ($this->breakTimes->isEmpty()) {
+            return '00:00';
         }
-    }
 
-    return gmdate('H:i', $total);
-}
+        $total = 0;
 
-public function getTotalWorkTimeHmAttribute()
-{
-    if (!$this->clock_in || !$this->clock_out) {
-        return "00:00";
-    }
-
-    $work = strtotime($this->clock_out) - strtotime($this->clock_in);
-
-    // 休憩時間を引く
-    $break = 0;
-    foreach ($this->breakTimes as $bt) {
-        if ($bt->break_start && $bt->break_end) {
-            $break += strtotime($bt->break_end) - strtotime($bt->break_start);
+        foreach ($this->breakTimes as $bt) {
+            if ($bt->break_start && $bt->break_end) {
+                $total += strtotime($bt->break_end) - strtotime($bt->break_start);
+            }
         }
+
+        return gmdate('H:i', $total);
     }
 
-    $total = max(0, $work - $break);
+    /**
+     * 実働時間（HH:MM）
+     */
+    public function getTotalWorkTimeHmAttribute()
+    {
+        if (!$this->clock_in || !$this->clock_out) {
+            return '00:00';
+        }
 
-    return gmdate('H:i', $total);
-}
+        $work = strtotime($this->clock_out) - strtotime($this->clock_in);
 
+        $break = 0;
+        foreach ($this->breakTimes as $bt) {
+            if ($bt->break_start && $bt->break_end) {
+                $break += strtotime($bt->break_end) - strtotime($bt->break_start);
+            }
+        }
+
+        $total = max(0, $work - $break);
+
+        return gmdate('H:i', $total);
+    }
 }

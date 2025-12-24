@@ -33,7 +33,7 @@ class AttendanceRequest extends FormRequest
         ];
     }
 
-    /** 
+    /**
      * 追加バリデーション（仕様に基づくロジック）
      */
     public function withValidator($validator)

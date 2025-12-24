@@ -8,7 +8,7 @@ class AttendanceAdminUpdateRequest extends FormRequest
 {
     public function authorize()
     {
-        return true; // 管理者専用ルートで使用する想定
+        return true;
     }
 
     public function rules()

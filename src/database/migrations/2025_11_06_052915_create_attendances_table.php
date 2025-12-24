@@ -13,9 +13,6 @@ return new class extends Migration {
             // 紐づくユーザー
             $table->unsignedBigInteger('user_id');
 
-            // SQLiteでは外部キー制約が動作するためにはPRAGMA foreign_keys=ON
-            // Laravelのテスト環境では RefreshDatabase を使うと自動でONになる
-
             // 勤務日
             $table->date('work_date')->nullable(false);
 

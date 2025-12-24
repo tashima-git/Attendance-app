@@ -54,14 +54,12 @@ h1 {
     cursor: pointer;
 }
 
-/* 実際の input(type=month) 完全非表示 */
 .month-picker-hidden {
     opacity: 0;
     pointer-events: none;
     position: absolute;
 }
 
-/* テーブル */
 table {
     width: 100%;
     border-collapse: collapse;

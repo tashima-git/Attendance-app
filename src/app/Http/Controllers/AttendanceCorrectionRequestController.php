@@ -53,12 +53,10 @@ class AttendanceCorrectionRequestController extends Controller
     {
         $user = auth()->user();
 
-        // 勤怠データの存在確認
         $attendance = Attendance::where('id', $request->attendance_id)
             ->where('user_id', $user->id)
             ->first();
 
-        // 修正申請本体
         $correctionRequest = AttendanceCorrectionRequest::create([
             'user_id'       => $user->id,
             'attendance_id' => $attendance->id ?? null,
@@ -69,7 +67,6 @@ class AttendanceCorrectionRequestController extends Controller
             'status'        => 'pending',
         ]);
 
-        // 休憩
         if ($request->filled('breaks')) {
             foreach ($request->breaks as $break) {
                 if (!empty($break['break_start']) && !empty($break['break_end'])) {

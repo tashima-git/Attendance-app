@@ -12,7 +12,7 @@ class CorrectionBreakTime extends Model
     protected $table = 'correction_break_times';
 
     /**
-     * mass assignable
+     * Mass assignable attributes.
      *
      * @var array
      */
@@ -25,8 +25,6 @@ class CorrectionBreakTime extends Model
 
     protected $casts = [
         'total_break_time' => 'integer',
-        // 'break_start' and 'break_end' are kept as strings by default (TIME),
-        // you can uncomment the lines below if you want Carbon instances (and your DB returns them correctly)
         // 'break_start' => 'datetime:H:i',
         // 'break_end'   => 'datetime:H:i',
     ];
@@ -36,28 +34,33 @@ class CorrectionBreakTime extends Model
      */
     public function correctionRequest()
     {
-        return $this->belongsTo(AttendanceCorrectionRequest::class, 'correction_request_id');
+        return $this->belongsTo(
+            AttendanceCorrectionRequest::class,
+            'correction_request_id'
+        );
     }
 
     /**
-     * 利便性メソッド：休憩時間（分）を返す
+     * 利便性アクセサ：休憩時間（分）
      */
     public function getMinutesAttribute()
     {
-        return $this->total_break_time !== null ? (int) $this->total_break_time : 0;
+        return $this->total_break_time !== null
+            ? (int) $this->total_break_time
+            : 0;
     }
 
     /**
-     * 利便性メソッド：休憩時間を H:i 形式で返す
+     * 利便性アクセサ：休憩時間（H:i）
      */
     public function getHmsAttribute()
     {
         $minutes = $this->minutes;
+
         if ($minutes <= 0) {
             return null;
         }
 
-        $seconds = $minutes * 60;
-        return gmdate('H:i', $seconds);
+        return gmdate('H:i', $minutes * 60);
     }
 }

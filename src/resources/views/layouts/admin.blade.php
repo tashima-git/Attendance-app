@@ -16,25 +16,28 @@
             </a>
         </div>
 
-@auth('admin')
-    @if (!request()->is('admin/login'))
-        <nav>
-            <a href="{{ route('admin.attendance.list') }}">勤怠一覧</a>
-            <a href="{{ route('admin.staff_list') }}">スタッフ一覧</a>
-            <a href="{{ route('admin.correction_request.list') }}">申請一覧</a>
-            <form method="POST" action="{{ route('admin.logout') }}" style="display:inline;">
-                @csrf
-                <button type="submit" class="logout">ログアウト</button>
-            </form>
-        </nav>
-    @endif
-@endauth
+        @auth('admin')
+            @if (!request()->is('admin/login'))
+                <nav>
+                    <a href="{{ route('admin.attendance.list') }}">勤怠一覧</a>
+                    <a href="{{ route('admin.staff_list') }}">スタッフ一覧</a>
+                    <a href="{{ route('admin.correction_request.list') }}">申請一覧</a>
 
+                    <form method="POST"
+                          action="{{ route('admin.logout') }}"
+                          style="display: inline;">
+                        @csrf
+                        <button type="submit" class="logout">
+                            ログアウト
+                        </button>
+                    </form>
+                </nav>
+            @endif
+        @endauth
     </header>
 
     <main class="container">
         @yield('content')
     </main>
-
 </body>
 </html>
